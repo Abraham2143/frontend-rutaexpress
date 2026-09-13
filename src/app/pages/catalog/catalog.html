@@ -1,0 +1,489 @@
+<div class="page">
+
+  <!-- =========================
+       SIDEBAR
+  ========================== -->
+
+  <aside class="sidebar">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+        R
+      </div>
+
+      <span>
+        RutaExpress
+      </span>
+
+    </div>
+
+
+    <nav class="menu">
+
+      <p class="menu-title">
+        MENÚ
+      </p>
+
+
+      <a
+        class="menu-item"
+        routerLink="/dashboard"
+      >
+
+        <span class="menu-icon">
+          ⌂
+        </span>
+
+        <span>
+          Inicio
+        </span>
+
+      </a>
+
+
+      <a
+        class="menu-item"
+        routerLink="/shipments"
+      >
+
+        <span class="menu-icon">
+          ▣
+        </span>
+
+        <span>
+          Envíos
+        </span>
+
+      </a>
+
+
+      <a
+        class="menu-item active"
+        routerLink="/catalog"
+      >
+
+        <span class="menu-icon">
+          ◇
+        </span>
+
+        <span>
+          Catálogo
+        </span>
+
+      </a>
+
+    </nav>
+
+  </aside>
+
+
+  <!-- =========================
+       CONTENIDO
+  ========================== -->
+
+  <main class="content">
+
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+      <div>
+
+        <p>
+          RutaExpress / Catálogo
+        </p>
+
+        <h1>
+          Catálogo de servicios
+        </h1>
+
+      </div>
+
+    </header>
+
+
+    <section class="body">
+
+
+      <!-- =========================
+           ROL DEMOSTRACIÓN
+      ========================== -->
+
+      <div class="role-demo">
+
+        <div>
+
+          <strong>
+            Vista de demostración
+          </strong>
+
+          <p>
+            Usuario autenticado como:
+            {{ roleName }}
+          </p>
+
+        </div>
+
+
+        <select
+          [ngModel]="currentRole"
+          (ngModelChange)="changeRole($event)"
+        >
+
+          <option value="DISPATCHER">
+            Despachador
+          </option>
+
+          <option value="ADMIN">
+            Administrador
+          </option>
+
+          <option value="CLIENT">
+            Cliente
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <!-- INTRO -->
+
+      <div class="intro">
+
+        <div>
+
+          <h2>
+            Servicios disponibles
+          </h2>
+
+          <p>
+            Consulta los tipos de envío,
+            tarifas y capacidad disponible
+            de RutaExpress.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           RESUMEN
+      ========================== -->
+
+      <div class="summary-grid">
+
+
+        <article class="summary-card">
+
+          <span>
+            Servicios activos
+          </span>
+
+          <strong>
+            {{ services.length }}
+          </strong>
+
+          <p>
+            Tipos de envío disponibles
+          </p>
+
+        </article>
+
+
+        <article class="summary-card">
+
+          <span>
+            Capacidad disponible
+          </span>
+
+          <strong>
+            {{ totalCapacity }}
+          </strong>
+
+          <p>
+            de {{ maxCapacity }}
+            envíos
+          </p>
+
+        </article>
+
+
+        <article class="summary-card">
+
+          <span>
+            Tarifa desde
+          </span>
+
+          <strong>
+            $3.990
+          </strong>
+
+          <p>
+            Servicio Estándar
+          </p>
+
+        </article>
+
+      </div>
+
+
+      <!-- =========================
+           TARJETAS SERVICIOS
+      ========================== -->
+
+      <div class="services-grid">
+
+        <article
+          class="service-card"
+          *ngFor="
+            let service of services
+          "
+        >
+
+          <div class="service-header">
+
+            <div class="service-icon">
+              {{ service.icono }}
+            </div>
+
+
+            <div class="availability">
+
+              <span class="availability-dot">
+              </span>
+
+              Disponible
+
+            </div>
+
+          </div>
+
+
+          <h3>
+            {{ service.nombre }}
+          </h3>
+
+
+          <p class="description">
+
+            {{ service.descripcion }}
+
+          </p>
+
+
+          <div class="service-info">
+
+
+            <div>
+
+              <span>
+                Tiempo estimado
+              </span>
+
+              <strong>
+                {{ service.tiempo }}
+              </strong>
+
+            </div>
+
+
+            <div>
+
+              <span>
+                Tarifa base
+              </span>
+
+              <strong class="price">
+                {{
+                  formatPrice(
+                    service.tarifa
+                  )
+                }}
+              </strong>
+
+            </div>
+
+          </div>
+
+
+          <!-- CAPACIDAD -->
+
+          <div class="capacity">
+
+            <div class="capacity-header">
+
+              <span>
+                Capacidad disponible
+              </span>
+
+              <strong>
+
+                {{ service.capacidad }}
+                /
+                {{ service.capacidadMaxima }}
+
+              </strong>
+
+            </div>
+
+
+            <div class="capacity-bar">
+
+              <div
+                class="capacity-progress"
+
+                [style.width.%]="
+                  getCapacityPercentage(
+                    service
+                  )
+                "
+              >
+              </div>
+
+            </div>
+
+
+            <small>
+
+              {{
+                getCapacityPercentage(
+                  service
+                )
+              }}%
+              disponible
+
+            </small>
+
+          </div>
+
+        </article>
+
+      </div>
+
+
+      <!-- =========================
+           TABLA
+      ========================== -->
+
+      <section class="table-card">
+
+
+        <div class="table-header">
+
+          <div>
+
+            <h3>
+              Detalle de servicios
+            </h3>
+
+            <p>
+              Resumen de tarifas
+              y capacidad operacional.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <table>
+
+
+          <thead>
+
+            <tr>
+
+              <th>
+                SERVICIO
+              </th>
+
+              <th>
+                TIEMPO ESTIMADO
+              </th>
+
+              <th>
+                TARIFA
+              </th>
+
+              <th>
+                CAPACIDAD
+              </th>
+
+              <th>
+                DISPONIBILIDAD
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <tbody>
+
+
+            <tr
+              *ngFor="
+                let service of services
+              "
+            >
+
+              <td>
+
+                <strong>
+                  {{ service.nombre }}
+                </strong>
+
+              </td>
+
+
+              <td>
+                {{ service.tiempo }}
+              </td>
+
+
+              <td class="price-cell">
+
+                {{
+                  formatPrice(
+                    service.tarifa
+                  )
+                }}
+
+              </td>
+
+
+              <td>
+
+                {{ service.capacidad }}
+                /
+                {{ service.capacidadMaxima }}
+
+              </td>
+
+
+              <td>
+
+                <span class="available-badge">
+                  Disponible
+                </span>
+
+              </td>
+
+            </tr>
+
+
+          </tbody>
+
+        </table>
+
+      </section>
+
+    </section>
+
+  </main>
+
+</div>

@@ -1,0 +1,980 @@
+<div class="app-layout">
+
+  <!-- =====================================================
+       SIDEBAR
+  ====================================================== -->
+
+  <aside class="sidebar">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+        R
+      </div>
+
+      <span>
+        RutaExpress
+      </span>
+
+    </div>
+
+
+    <nav class="menu">
+
+      <p class="menu-title">
+        MENÚ
+      </p>
+
+
+      <!-- INICIO -->
+
+      <a
+        class="menu-item active"
+        routerLink="/dashboard"
+      >
+
+        <span class="menu-icon">
+          ⌂
+        </span>
+
+        <span>
+          Inicio
+        </span>
+
+      </a>
+
+
+      <!-- ENVÍOS -->
+
+      <a
+        class="menu-item"
+        routerLink="/shipments"
+      >
+
+        <span class="menu-icon">
+          ▣
+        </span>
+
+        <span>
+          Envíos
+        </span>
+
+      </a>
+
+
+      <!-- CATÁLOGO
+           SOLO ADMIN / DESPACHADOR -->
+
+      <a
+        *ngIf="canAccessCatalog"
+        class="menu-item"
+        routerLink="/catalog"
+      >
+
+        <span class="menu-icon">
+          ◇
+        </span>
+
+        <span>
+          Catálogo
+        </span>
+
+      </a>
+
+    </nav>
+
+
+    <!-- =====================================================
+         PARTE INFERIOR
+    ====================================================== -->
+
+    <div class="sidebar-bottom">
+
+      <div class="help-card">
+
+        <div class="help-icon">
+          ?
+        </div>
+
+        <div>
+
+          <strong>
+            ¿Necesitas ayuda?
+          </strong>
+
+          <p>
+            Contacta al administrador del sistema.
+          </p>
+
+        </div>
+
+      </div>
+
+
+      <button
+        class="logout-button"
+        type="button"
+        (click)="logout()"
+      >
+
+        <span>
+          ↪
+        </span>
+
+        Cerrar sesión
+
+      </button>
+
+    </div>
+
+  </aside>
+
+
+  <!-- =====================================================
+       CONTENIDO PRINCIPAL
+  ====================================================== -->
+
+  <main class="main-content">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="topbar">
+
+      <div>
+
+        <p class="breadcrumb">
+          RutaExpress / Inicio
+        </p>
+
+        <h1>
+          Dashboard
+        </h1>
+
+      </div>
+
+
+      <!-- USUARIO MICROSOFT -->
+
+      <div class="user-area">
+
+        <div class="user-text">
+
+          <strong>
+            {{ userName }}
+          </strong>
+
+          <span>
+            {{ userEmail }}
+          </span>
+
+        </div>
+
+
+        <div class="avatar">
+          {{ userInitial }}
+        </div>
+
+      </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         DASHBOARD
+    ====================================================== -->
+
+    <section class="dashboard-content">
+
+
+      <!-- =====================================================
+           MODO DE ROLES
+      ====================================================== -->
+
+      <div class="role-selector">
+
+        <div>
+
+          <strong>
+            Modo de roles
+          </strong>
+
+          <p>
+            Selecciona un rol para visualizar los permisos
+            y funciones disponibles en RutaExpress.
+          </p>
+
+        </div>
+
+
+        <div class="demo-role-control">
+
+          <label>
+            Vista simulada
+          </label>
+
+
+          <select
+            [ngModel]="currentRole"
+            (ngModelChange)="changeRole($event)"
+          >
+
+            <option value="CLIENT">
+              Cliente
+            </option>
+
+            <option value="DISPATCHER">
+              Despachador
+            </option>
+
+            <option value="ADMIN">
+              Administrador
+            </option>
+
+          </select>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================================
+           BIENVENIDA
+      ====================================================== -->
+
+      <div class="welcome">
+
+        <div>
+
+          <h2>
+            ¡Hola, {{ userName }}!
+          </h2>
+
+
+          <!-- ADMIN -->
+
+          <p *ngIf="isAdmin">
+            Revisa el estado general de la red logística
+            de RutaExpress.
+          </p>
+
+
+          <!-- DESPACHADOR -->
+
+          <p *ngIf="isDispatcher">
+            Revisa los envíos en bodega y actualmente
+            en ruta.
+          </p>
+
+
+          <!-- CLIENTE -->
+
+          <p *ngIf="isClient">
+            Revisa tus últimos envíos y su estado actual.
+          </p>
+
+        </div>
+
+
+        <!-- CLIENTE Y DESPACHADOR PUEDEN CREAR -->
+
+        <button
+          *ngIf="!isAdmin"
+          class="primary-button"
+          type="button"
+          routerLink="/shipments"
+        >
+
+          <span>
+            ＋
+          </span>
+
+          Nuevo envío
+
+        </button>
+
+      </div>
+
+
+      <!-- =====================================================
+           ADMINISTRADOR
+      ====================================================== -->
+
+      <ng-container *ngIf="isAdmin">
+
+
+        <div class="section-role-title">
+
+          <span class="role-badge admin">
+            ADMINISTRADOR
+          </span>
+
+          <h3>
+            KPIs de la red
+          </h3>
+
+        </div>
+
+
+        <!-- KPIs -->
+
+        <div class="stats-grid">
+
+
+          <!-- TOTAL -->
+
+          <article class="stat-card">
+
+            <div class="stat-top">
+
+              <span>
+                Total de envíos
+              </span>
+
+              <div class="stat-icon blue">
+                ▣
+              </div>
+
+            </div>
+
+
+            <strong>
+              24
+            </strong>
+
+            <p>
+              Operación total
+            </p>
+
+          </article>
+
+
+          <!-- PENDIENTES -->
+
+          <article class="stat-card">
+
+            <div class="stat-top">
+
+              <span>
+                Pendientes
+              </span>
+
+              <div class="stat-icon orange">
+                ◷
+              </div>
+
+            </div>
+
+
+            <strong>
+              6
+            </strong>
+
+            <p>
+              Esperando despacho
+            </p>
+
+          </article>
+
+
+          <!-- EN TRÁNSITO -->
+
+          <article class="stat-card">
+
+            <div class="stat-top">
+
+              <span>
+                En tránsito
+              </span>
+
+              <div class="stat-icon purple">
+                ➜
+              </div>
+
+            </div>
+
+
+            <strong>
+              11
+            </strong>
+
+            <p>
+              Actualmente en ruta
+            </p>
+
+          </article>
+
+
+          <!-- ENTREGADOS -->
+
+          <article class="stat-card">
+
+            <div class="stat-top">
+
+              <span>
+                Entregados
+              </span>
+
+              <div class="stat-icon green">
+                ✓
+              </div>
+
+            </div>
+
+
+            <strong>
+              7
+            </strong>
+
+            <p>
+              Entregados correctamente
+            </p>
+
+          </article>
+
+        </div>
+
+
+        <!-- ACCIONES -->
+
+        <div class="bottom-grid">
+
+
+          <!-- GESTIONAR ENVÍOS -->
+
+          <section
+            class="quick-card"
+            routerLink="/shipments"
+          >
+
+            <div class="quick-icon">
+              ▣
+            </div>
+
+
+            <div>
+
+              <h3>
+                Gestionar envíos
+              </h3>
+
+              <p>
+                Consulta envíos y actualiza
+                su estado operacional.
+              </p>
+
+            </div>
+
+
+            <span class="arrow">
+              →
+            </span>
+
+          </section>
+
+
+          <!-- CATÁLOGO -->
+
+          <section
+            class="quick-card"
+            routerLink="/catalog"
+          >
+
+            <div class="quick-icon catalog">
+              ◇
+            </div>
+
+
+            <div>
+
+              <h3>
+                Consultar catálogo
+              </h3>
+
+              <p>
+                Revisa servicios, tarifas
+                y capacidad disponible.
+              </p>
+
+            </div>
+
+
+            <span class="arrow">
+              →
+            </span>
+
+          </section>
+
+        </div>
+
+      </ng-container>
+
+
+      <!-- =====================================================
+           DESPACHADOR
+      ====================================================== -->
+
+      <ng-container *ngIf="isDispatcher">
+
+
+        <div class="section-role-title">
+
+          <span class="role-badge dispatcher">
+            DESPACHADOR
+          </span>
+
+          <h3>
+            Operación de envíos
+          </h3>
+
+        </div>
+
+
+        <!-- RESUMEN -->
+
+        <div class="dispatcher-grid">
+
+
+          <!-- EN BODEGA -->
+
+          <article class="operation-card">
+
+            <div class="operation-icon warehouse">
+              □
+            </div>
+
+
+            <div>
+
+              <span>
+                En bodega
+              </span>
+
+              <strong>
+                6
+              </strong>
+
+              <p>
+                Envíos esperando despacho
+              </p>
+
+            </div>
+
+          </article>
+
+
+          <!-- EN RUTA -->
+
+          <article class="operation-card">
+
+            <div class="operation-icon route">
+              ➜
+            </div>
+
+
+            <div>
+
+              <span>
+                En ruta
+              </span>
+
+              <strong>
+                11
+              </strong>
+
+              <p>
+                Envíos actualmente en tránsito
+              </p>
+
+            </div>
+
+          </article>
+
+        </div>
+
+
+        <!-- ENVÍOS QUE REQUIEREN ATENCIÓN -->
+
+        <section class="shipments-card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h3>
+                Envíos que requieren atención
+              </h3>
+
+              <p>
+                Envíos pendientes y actualmente en ruta.
+              </p>
+
+            </div>
+
+
+            <button
+              class="secondary-button"
+              type="button"
+              routerLink="/shipments"
+            >
+
+              Gestionar envíos
+
+            </button>
+
+          </div>
+
+
+          <div class="table-container">
+
+            <table>
+
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    ENVÍO
+                  </th>
+
+                  <th>
+                    DESTINATARIO
+                  </th>
+
+                  <th>
+                    DESTINO
+                  </th>
+
+                  <th>
+                    ESTADO
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody>
+
+
+                <tr>
+
+                  <td class="shipment-id">
+                    #RX-1024
+                  </td>
+
+                  <td>
+                    Camila González
+                  </td>
+
+                  <td>
+                    Providencia
+                  </td>
+
+                  <td>
+
+                    <span class="status transit">
+                      En tránsito
+                    </span>
+
+                  </td>
+
+                </tr>
+
+
+                <tr>
+
+                  <td class="shipment-id">
+                    #RX-1022
+                  </td>
+
+                  <td>
+                    Daniela Soto
+                  </td>
+
+                  <td>
+                    Ñuñoa
+                  </td>
+
+                  <td>
+
+                    <span class="status pending">
+                      Pendiente
+                    </span>
+
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
+
+        <!-- ACCIONES -->
+
+        <div class="bottom-grid">
+
+
+          <!-- ENVÍOS -->
+
+          <section
+            class="quick-card"
+            routerLink="/shipments"
+          >
+
+            <div class="quick-icon">
+              ＋
+            </div>
+
+
+            <div>
+
+              <h3>
+                Gestionar envíos
+              </h3>
+
+              <p>
+                Registra envíos y actualiza
+                su estado.
+              </p>
+
+            </div>
+
+
+            <span class="arrow">
+              →
+            </span>
+
+          </section>
+
+
+          <!-- CATÁLOGO -->
+
+          <section
+            class="quick-card"
+            routerLink="/catalog"
+          >
+
+            <div class="quick-icon catalog">
+              ◇
+            </div>
+
+
+            <div>
+
+              <h3>
+                Consultar catálogo
+              </h3>
+
+              <p>
+                Revisa tarifas y capacidad disponible.
+              </p>
+
+            </div>
+
+
+            <span class="arrow">
+              →
+            </span>
+
+          </section>
+
+        </div>
+
+      </ng-container>
+
+
+      <!-- =====================================================
+           CLIENTE
+      ====================================================== -->
+
+      <ng-container *ngIf="isClient">
+
+
+        <div class="section-role-title">
+
+          <span class="role-badge client">
+            CLIENTE
+          </span>
+
+          <h3>
+            Mis últimos envíos
+          </h3>
+
+        </div>
+
+
+        <!-- ÚLTIMOS ENVÍOS -->
+
+        <section class="shipments-card">
+
+          <div class="card-header">
+
+            <div>
+
+              <h3>
+                Últimos envíos
+              </h3>
+
+              <p>
+                Consulta el estado de tus envíos recientes.
+              </p>
+
+            </div>
+
+
+            <button
+              class="secondary-button"
+              type="button"
+              routerLink="/shipments"
+            >
+
+              Ver mis envíos
+
+            </button>
+
+          </div>
+
+
+          <div class="table-container">
+
+            <table>
+
+
+              <thead>
+
+                <tr>
+
+                  <th>
+                    ENVÍO
+                  </th>
+
+                  <th>
+                    DESTINO
+                  </th>
+
+                  <th>
+                    SERVICIO
+                  </th>
+
+                  <th>
+                    ESTADO
+                  </th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody>
+
+
+                <tr>
+
+                  <td class="shipment-id">
+                    #RX-1024
+                  </td>
+
+                  <td>
+                    Providencia
+                  </td>
+
+                  <td>
+                    Express
+                  </td>
+
+                  <td>
+
+                    <span class="status transit">
+                      En tránsito
+                    </span>
+
+                  </td>
+
+                </tr>
+
+
+                <tr>
+
+                  <td class="shipment-id">
+                    #RX-1023
+                  </td>
+
+                  <td>
+                    Las Condes
+                  </td>
+
+                  <td>
+                    Same Day
+                  </td>
+
+                  <td>
+
+                    <span class="status delivered">
+                      Entregado
+                    </span>
+
+                  </td>
+
+                </tr>
+
+              </tbody>
+
+            </table>
+
+          </div>
+
+        </section>
+
+
+        <!-- CREAR ENVÍO -->
+
+        <div class="bottom-grid single-action">
+
+          <section
+            class="quick-card"
+            routerLink="/shipments"
+          >
+
+            <div class="quick-icon">
+              ＋
+            </div>
+
+
+            <div>
+
+              <h3>
+                Crear nuevo envío
+              </h3>
+
+              <p>
+                Registra un nuevo envío y consulta
+                posteriormente su estado.
+              </p>
+
+            </div>
+
+
+            <span class="arrow">
+              →
+            </span>
+
+          </section>
+
+        </div>
+
+      </ng-container>
+
+    </section>
+
+  </main>
+
+</div>

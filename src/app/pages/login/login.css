@@ -1,0 +1,398 @@
+:host {
+  display: block;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* =========================
+   LADO IZQUIERDO
+========================= */
+
+.brand-section {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      circle at 15% 85%,
+      rgba(37, 99, 235, 0.25),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(59, 130, 246, 0.15),
+      transparent 25%
+    ),
+    #0f172a;
+
+  color: white;
+}
+
+.brand-section::after {
+  content: "";
+  position: absolute;
+  width: 420px;
+  height: 420px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  right: -210px;
+  bottom: -100px;
+}
+
+.brand-content {
+  position: relative;
+  z-index: 1;
+
+  max-width: 680px;
+  height: 100%;
+
+  margin: 0 auto;
+  padding: 55px 70px;
+
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* LOGO */
+
+.logo,
+.mobile-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.logo-icon {
+  width: 42px;
+  height: 42px;
+
+  display: grid;
+  place-items: center;
+
+  background: #2563eb;
+  border-radius: 12px;
+
+  color: white;
+  font-weight: 800;
+}
+
+
+/* CONTENIDO PRINCIPAL */
+
+.hero-content {
+  margin: auto 0;
+}
+
+.badge,
+.welcome-label {
+  display: inline-block;
+
+  color: #3b82f6;
+
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+
+.hero-content h1 {
+  margin: 22px 0;
+
+  font-size: clamp(46px, 5vw, 72px);
+  line-height: 1.03;
+  letter-spacing: -2.5px;
+}
+
+.hero-content h1 span {
+  color: #60a5fa;
+}
+
+.hero-content > p {
+  max-width: 540px;
+
+  color: #cbd5e1;
+
+  font-size: 17px;
+  line-height: 1.8;
+}
+
+
+/* BENEFICIOS */
+
+.features {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 22px;
+
+  margin-top: 42px;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  color: #e2e8f0;
+  font-size: 14px;
+}
+
+.feature-icon {
+  width: 22px;
+  height: 22px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: rgba(37, 99, 235, 0.25);
+  color: #60a5fa;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.copyright {
+  color: #64748b;
+  font-size: 12px;
+}
+
+
+/* =========================
+   LOGIN
+========================= */
+
+.login-section {
+  min-height: 100vh;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 40px;
+
+  background: #f8fafc;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 440px;
+}
+
+.mobile-logo {
+  display: none;
+}
+
+.login-card h2 {
+  margin: 12px 0 10px;
+
+  color: #0f172a;
+
+  font-size: 38px;
+  letter-spacing: -1.2px;
+}
+
+.description {
+  margin: 0 0 34px;
+
+  color: #64748b;
+
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+
+/* MICROSOFT BUTTON */
+
+.microsoft-button {
+  width: 100%;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+
+  background: white;
+
+  padding: 15px 18px;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  gap: 13px;
+
+  color: #0f172a;
+
+  font-size: 15px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.microsoft-button:hover {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 8px 25px rgba(15, 23, 42, 0.08);
+
+  transform: translateY(-1px);
+}
+
+
+/* LOGO MICROSOFT */
+
+.microsoft-logo {
+  width: 20px;
+  height: 20px;
+
+  display: grid;
+
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+
+  gap: 2px;
+}
+
+.microsoft-logo span:nth-child(1) {
+  background: #f25022;
+}
+
+.microsoft-logo span:nth-child(2) {
+  background: #7fba00;
+}
+
+.microsoft-logo span:nth-child(3) {
+  background: #00a4ef;
+}
+
+.microsoft-logo span:nth-child(4) {
+  background: #ffb900;
+}
+
+
+/* SEGURIDAD */
+
+.security {
+  margin-top: 26px;
+
+  padding: 17px;
+
+  display: flex;
+  align-items: flex-start;
+
+  gap: 12px;
+
+  border-radius: 10px;
+
+  background: #eff6ff;
+}
+
+.security-icon {
+  width: 25px;
+  height: 25px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 50%;
+
+  background: #dbeafe;
+  color: #2563eb;
+
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.security strong {
+  color: #1e3a8a;
+  font-size: 13px;
+}
+
+.security p {
+  margin: 4px 0 0;
+
+  color: #64748b;
+
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+
+/* AYUDA */
+
+.help {
+  margin-top: 32px;
+
+  color: #94a3b8;
+
+  font-size: 12px;
+  text-align: center;
+}
+
+.help a {
+  color: #2563eb;
+
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.help a:hover {
+  text-decoration: underline;
+}
+
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 850px) {
+
+  .login-page {
+    display: block;
+  }
+
+  .brand-section {
+    display: none;
+  }
+
+  .login-section {
+    padding: 25px;
+  }
+
+  .mobile-logo {
+    display: flex;
+
+    margin-bottom: 70px;
+
+    color: #0f172a;
+  }
+
+  .login-card h2 {
+    font-size: 32px;
+  }
+}

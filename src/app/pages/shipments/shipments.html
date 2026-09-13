@@ -1,0 +1,717 @@
+<div class="page">
+
+  <!-- =====================================================
+       SIDEBAR
+  ====================================================== -->
+
+  <aside class="sidebar">
+
+    <div class="brand">
+
+      <div class="brand-icon">
+        R
+      </div>
+
+      <span>
+        RutaExpress
+      </span>
+
+    </div>
+
+
+    <nav class="menu">
+
+      <p class="menu-title">
+        MENÚ
+      </p>
+
+
+      <!-- INICIO -->
+
+      <a
+        class="menu-item"
+        routerLink="/dashboard"
+      >
+
+        <span class="menu-icon">
+          ⌂
+        </span>
+
+        <span>
+          Inicio
+        </span>
+
+      </a>
+
+
+      <!-- ENVÍOS -->
+
+      <a
+        class="menu-item active"
+        routerLink="/shipments"
+      >
+
+        <span class="menu-icon">
+          ▣
+        </span>
+
+        <span>
+          Envíos
+        </span>
+
+      </a>
+
+
+      <!-- CATÁLOGO
+           SOLO ADMIN / DESPACHADOR -->
+
+      <a
+        *ngIf="canAccessCatalog"
+        class="menu-item"
+        routerLink="/catalog"
+      >
+
+        <span class="menu-icon">
+          ◇
+        </span>
+
+        <span>
+          Catálogo
+        </span>
+
+      </a>
+
+    </nav>
+
+  </aside>
+
+
+  <!-- =====================================================
+       CONTENIDO PRINCIPAL
+  ====================================================== -->
+
+  <main class="content">
+
+
+    <!-- HEADER -->
+
+    <header class="header">
+
+      <div>
+
+        <p>
+          RutaExpress / Envíos
+        </p>
+
+        <h1>
+          Gestión de envíos
+        </h1>
+
+      </div>
+
+
+      <!-- CLIENTE Y DESPACHADOR PUEDEN CREAR -->
+
+      <button
+        *ngIf="canCreateShipment"
+        class="new-button"
+        type="button"
+        (click)="openModal()"
+      >
+
+        ＋ Nuevo envío
+
+      </button>
+
+    </header>
+
+
+    <!-- =====================================================
+         CONTENIDO
+    ====================================================== -->
+
+    <section class="body">
+
+
+      <!-- INTRODUCCIÓN -->
+
+      <div class="intro">
+
+        <h2>
+          Envíos
+        </h2>
+
+        <p>
+          Consulta y administra los envíos
+          disponibles en RutaExpress.
+        </p>
+
+      </div>
+
+
+      <!-- =====================================================
+           RESUMEN
+      ====================================================== -->
+
+      <div class="summary">
+
+
+        <div class="summary-card">
+
+          <span>
+            Total de envíos
+          </span>
+
+          <strong>
+            {{ shipments.length }}
+          </strong>
+
+        </div>
+
+
+        <div class="summary-card">
+
+          <span>
+            Pendientes
+          </span>
+
+          <strong>
+            {{ pendingCount }}
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <!-- =====================================================
+           FILTROS
+      ====================================================== -->
+
+      <section class="filters">
+
+
+        <!-- BUSCADOR -->
+
+        <div class="search">
+
+          <span>
+            ⌕
+          </span>
+
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            placeholder="Buscar por ID, destinatario o comuna..."
+          >
+
+        </div>
+
+
+        <!-- ESTADO -->
+
+        <select
+          [(ngModel)]="statusFilter"
+        >
+
+          <option value="Todos">
+            Todos los estados
+          </option>
+
+          <option value="Pendiente">
+            Pendiente
+          </option>
+
+          <option value="En tránsito">
+            En tránsito
+          </option>
+
+          <option value="Entregado">
+            Entregado
+          </option>
+
+        </select>
+
+      </section>
+
+
+      <!-- =====================================================
+           TABLA
+      ====================================================== -->
+
+      <section class="table-card">
+
+        <table>
+
+
+          <!-- CABECERA -->
+
+          <thead>
+
+            <tr>
+
+              <th>
+                ID
+              </th>
+
+              <th>
+                DESTINATARIO
+              </th>
+
+              <th>
+                DESTINO
+              </th>
+
+              <th>
+                SERVICIO
+              </th>
+
+              <th>
+                FECHA
+              </th>
+
+              <th>
+                ESTADO
+              </th>
+
+
+              <!--
+                SOLO ADMIN Y DESPACHADOR
+                VEN ACCIONES DE ESTADO
+              -->
+
+              <th
+                *ngIf="canChangeStatus"
+              >
+                ACCIÓN
+              </th>
+
+            </tr>
+
+          </thead>
+
+
+          <!-- CUERPO -->
+
+          <tbody>
+
+            <tr
+              *ngFor="
+                let shipment
+                of filteredShipments
+              "
+            >
+
+
+              <!-- ID -->
+
+              <td class="id">
+
+                #{{ shipment.id }}
+
+              </td>
+
+
+              <!-- DESTINATARIO -->
+
+              <td>
+
+                <strong>
+                  {{ shipment.destinatario }}
+                </strong>
+
+                <small>
+                  {{ shipment.direccion }}
+                </small>
+
+              </td>
+
+
+              <!-- COMUNA -->
+
+              <td>
+                {{ shipment.comuna }}
+              </td>
+
+
+              <!-- SERVICIO -->
+
+              <td>
+                {{ shipment.servicio }}
+              </td>
+
+
+              <!-- FECHA -->
+
+              <td>
+                {{ shipment.fecha }}
+              </td>
+
+
+              <!-- ESTADO -->
+
+              <td>
+
+                <span
+                  class="status"
+
+                  [class.pending]="
+                    shipment.estado ===
+                    'Pendiente'
+                  "
+
+                  [class.transit]="
+                    shipment.estado ===
+                    'En tránsito'
+                  "
+
+                  [class.delivered]="
+                    shipment.estado ===
+                    'Entregado'
+                  "
+                >
+
+                  {{ shipment.estado }}
+
+                </span>
+
+              </td>
+
+
+              <!-- =================================================
+                   ACCIÓN
+                   SOLO DESPACHADOR / ADMIN
+              ================================================== -->
+
+              <td
+                *ngIf="canChangeStatus"
+              >
+
+                <button
+                  class="action-button"
+
+                  type="button"
+
+                  [disabled]="
+                    shipment.estado ===
+                    'Entregado'
+                  "
+
+                  (click)="
+                    changeStatus(shipment)
+                  "
+                >
+
+
+                  @if (
+                    shipment.estado ===
+                    'Pendiente'
+                  ) {
+
+                    Despachar
+
+                  }
+
+                  @else if (
+                    shipment.estado ===
+                    'En tránsito'
+                  ) {
+
+                    Entregar
+
+                  }
+
+                  @else {
+
+                    Completado
+
+                  }
+
+                </button>
+
+              </td>
+
+            </tr>
+
+          </tbody>
+
+        </table>
+
+
+        <!-- SIN RESULTADOS -->
+
+        <div
+          class="empty"
+
+          *ngIf="
+            filteredShipments.length === 0
+          "
+        >
+
+          No se encontraron envíos.
+
+        </div>
+
+      </section>
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       MODAL NUEVO ENVÍO
+
+       SOLO CLIENTE / DESPACHADOR
+  ====================================================== -->
+
+  <div
+    class="modal-background"
+
+    *ngIf="
+      showModal &&
+      canCreateShipment
+    "
+
+    (click)="closeModal()"
+  >
+
+
+    <div
+      class="modal"
+
+      (click)="
+        $event.stopPropagation()
+      "
+    >
+
+
+      <!-- HEADER MODAL -->
+
+      <div class="modal-header">
+
+        <div>
+
+          <h2>
+            Nuevo envío
+          </h2>
+
+          <p>
+            Registra un nuevo envío
+            en RutaExpress.
+          </p>
+
+        </div>
+
+
+        <button
+          class="close"
+
+          type="button"
+
+          (click)="closeModal()"
+        >
+
+          ×
+
+        </button>
+
+      </div>
+
+
+      <!-- =================================================
+           FORMULARIO
+      ================================================== -->
+
+      <form
+        (ngSubmit)="createShipment()"
+      >
+
+
+        <!-- DESTINATARIO -->
+
+        <div class="form-group">
+
+          <label
+            for="destinatario"
+          >
+            Destinatario
+          </label>
+
+
+          <input
+            id="destinatario"
+
+            type="text"
+
+            name="destinatario"
+
+            [(ngModel)]="
+              newShipment.destinatario
+            "
+
+            placeholder="Ej: María González"
+
+            required
+          >
+
+        </div>
+
+
+        <!-- DIRECCIÓN -->
+
+        <div class="form-group">
+
+          <label
+            for="direccion"
+          >
+            Dirección
+          </label>
+
+
+          <input
+            id="direccion"
+
+            type="text"
+
+            name="direccion"
+
+            [(ngModel)]="
+              newShipment.direccion
+            "
+
+            placeholder="Ej: Av. Providencia 1234"
+
+            required
+          >
+
+        </div>
+
+
+        <!-- COMUNA -->
+
+        <div class="form-group">
+
+          <label
+            for="comuna"
+          >
+            Comuna
+          </label>
+
+
+          <input
+            id="comuna"
+
+            type="text"
+
+            name="comuna"
+
+            [(ngModel)]="
+              newShipment.comuna
+            "
+
+            placeholder="Ej: Providencia"
+
+            required
+          >
+
+        </div>
+
+
+        <!-- SERVICIO -->
+
+        <div class="form-group">
+
+          <label
+            for="servicio"
+          >
+            Tipo de servicio
+          </label>
+
+
+          <select
+            id="servicio"
+
+            name="servicio"
+
+            [(ngModel)]="
+              newShipment.servicio
+            "
+          >
+
+            <option value="Estándar">
+              Estándar
+            </option>
+
+            <option value="Express">
+              Express
+            </option>
+
+            <option value="Same Day">
+              Same Day
+            </option>
+
+          </select>
+
+        </div>
+
+
+        <!-- INFORMACIÓN -->
+
+        <div class="form-info">
+
+          <span>
+            i
+          </span>
+
+          <p>
+
+            El envío será registrado
+            inicialmente con estado
+
+            <strong>
+              Pendiente
+            </strong>.
+
+          </p>
+
+        </div>
+
+
+        <!-- BOTONES -->
+
+        <div class="modal-actions">
+
+
+          <button
+            type="button"
+
+            class="cancel-button"
+
+            (click)="closeModal()"
+          >
+
+            Cancelar
+
+          </button>
+
+
+          <button
+            type="submit"
+
+            class="save-button"
+          >
+
+            Registrar envío
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</div>
