@@ -1,41 +1,59 @@
-# RutaExpress - Frontend
+# FrontendRutaexpress
 
-## Descripción
+This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.8.
 
-Frontend de la plataforma RutaExpress, sistema orientado a la gestión de envíos de última milla.
+## Development server
 
-Este componente proporciona la interfaz web mediante la cual los usuarios podrán acceder a las funcionalidades de la plataforma según su rol.
+To start a local development server, run:
 
-## Funcionalidades principales
+```bash
+ng serve
+```
 
-- Inicio de sesión corporativo.
-- Visualización del dashboard.
-- Gestión y seguimiento de envíos.
-- Consulta del catálogo de servicios.
-- Visualización de reportería.
-- Consulta de auditoría según permisos del usuario.
+Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
-## Roles
+## Code scaffolding
 
-- Admin
-- Despachador
-- Cliente
-- Auditor
+Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
 
-## Tecnologías
+```bash
+ng generate component component-name
+```
 
-- Angular
-- TypeScript
-- HTML
-- CSS
-- MSAL
-- Azure AD
+For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
 
-## Integrantes
+```bash
+ng generate --help
+```
 
-- Alexander Bello.
-- Abraham Neira.
+## Building
 
-## Proyecto
+To build the project run:
 
-Proyecto semestral RutaExpress.
+```bash
+ng build
+```
+
+This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Running unit tests
+
+To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+
+```bash
+ng test
+```
+
+## Running end-to-end tests
+
+For end-to-end (e2e) testing, run:
+
+```bash
+ng e2e
+```
+
+Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+
+## Additional Resources
+
+For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
