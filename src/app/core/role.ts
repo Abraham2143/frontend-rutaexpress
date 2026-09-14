@@ -1,35 +1,75 @@
-import { Injectable } from '@angular/core';
-import { MsalService } from '@azure/msal-angular';
+import {
+  Injectable
+} from '@angular/core';
 
-export type UserRole = 'ADMIN' | 'DISPATCHER' | 'CLIENT';
+import {
+  MsalService
+} from '@azure/msal-angular';
+
+
+/* =====================================================
+   ROLES DE RUTAEXPRESS
+
+   Estos valores coinciden directamente con:
+
+   Microsoft Entra
+   Backend BFF
+   Frontend Angular
+===================================================== */
+
+export type UserRole =
+  | 'ADMIN'
+  | 'DISPATCHER'
+  | 'CLIENT';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class RoleService {
 
-  private readonly ACTIVE_ROLE_KEY = 'rutaexpress-active-role';
 
-  constructor(private authService: MsalService) {}
+  private readonly storageKey =
+    'rutaexpress-active-role';
 
-  /**
-   * Obtiene los roles reales entregados por Microsoft Entra.
-   */
+
+  constructor(
+    private authService: MsalService
+  ) {}
+
+
+  /* =====================================================
+     OBTENER ROLES REALES DESDE MICROSOFT ENTRA
+  ====================================================== */
+
   getAssignedRoles(): UserRole[] {
 
+
     const account =
-      this.authService.instance.getActiveAccount() ??
+      this.authService.instance.getActiveAccount()
+      ??
       this.authService.instance.getAllAccounts()[0];
 
+
     if (!account) {
+
       return [];
+
     }
 
-    const claims = account.idTokenClaims as
-      | { roles?: string[] }
-      | undefined;
 
-    const tokenRoles = claims?.roles ?? [];
+    const tokenRoles =
+      account.idTokenClaims?.['roles'];
+
+
+    const entraRoles: string[] =
+      Array.isArray(tokenRoles)
+        ? tokenRoles.filter(
+            (role): role is string =>
+              typeof role === 'string'
+          )
+        : [];
+
 
     const validRoles: UserRole[] = [
       'ADMIN',
@@ -37,137 +77,242 @@ export class RoleService {
       'CLIENT'
     ];
 
-    return validRoles.filter(role =>
-      tokenRoles.includes(role)
+
+    return validRoles.filter(
+      role =>
+        entraRoles.includes(role)
     );
+
   }
 
-  /**
-   * Obtiene el rol actualmente activo en la interfaz.
-   */
+
+  /* =====================================================
+     OBTENER ROL ACTIVO
+  ====================================================== */
+
   getRole(): UserRole | null {
 
-    const assignedRoles = this.getAssignedRoles();
 
-    if (assignedRoles.length === 0) {
-      return null;
-    }
+    const assignedRoles =
+      this.getAssignedRoles();
 
-    const savedRole = sessionStorage.getItem(
-      this.ACTIVE_ROLE_KEY
-    ) as UserRole | null;
 
     if (
-      savedRole &&
-      assignedRoles.includes(savedRole)
+      assignedRoles.length === 0
     ) {
-      return savedRole;
+
+      return null;
+
     }
 
-    /**
-     * Si tiene más de un rol:
-     * ADMIN tiene prioridad,
-     * luego DISPATCHER,
-     * luego CLIENT.
-     */
-    const priority: UserRole[] = [
-      'ADMIN',
-      'DISPATCHER',
-      'CLIENT'
-    ];
+
+    const storedRole =
+      sessionStorage.getItem(
+        this.storageKey
+      );
+
+
+    if (
+      storedRole === 'ADMIN'
+      ||
+      storedRole === 'DISPATCHER'
+      ||
+      storedRole === 'CLIENT'
+    ) {
+
+      if (
+        assignedRoles.includes(
+          storedRole
+        )
+      ) {
+
+        return storedRole;
+
+      }
+
+    }
+
 
     const defaultRole =
-      priority.find(role =>
-        assignedRoles.includes(role)
-      ) ?? assignedRoles[0];
+      assignedRoles[0];
+
 
     sessionStorage.setItem(
-      this.ACTIVE_ROLE_KEY,
+      this.storageKey,
       defaultRole
     );
 
+
     return defaultRole;
+
   }
 
-  /**
-   * Cambia la vista activa solamente si el usuario
-   * realmente posee ese rol en Microsoft Entra.
-   */
-  setRole(role: UserRole): boolean {
 
-    const assignedRoles = this.getAssignedRoles();
+  /* =====================================================
+     CAMBIAR ROL ACTIVO
+  ====================================================== */
 
-    if (!assignedRoles.includes(role)) {
+  setRole(
+    role: UserRole
+  ): void {
 
-      console.warn(
-        `El usuario no posee el rol ${role}`
-      );
 
-      return false;
+    const assignedRoles =
+      this.getAssignedRoles();
+
+
+    if (
+      !assignedRoles.includes(
+        role
+      )
+    ) {
+
+      return;
+
     }
 
+
     sessionStorage.setItem(
-      this.ACTIVE_ROLE_KEY,
+      this.storageKey,
       role
     );
 
-    return true;
   }
 
-  hasRole(role: UserRole): boolean {
-    return this.getAssignedRoles().includes(role);
-  }
 
-  hasAnyRole(): boolean {
-    return this.getAssignedRoles().length > 0;
-  }
+  /* =====================================================
+     ALIAS
+  ====================================================== */
 
-  isAdmin(): boolean {
-    return this.getRole() === 'ADMIN';
-  }
+  setActiveRole(
+    role: UserRole
+  ): void {
 
-  isDispatcher(): boolean {
-    return this.getRole() === 'DISPATCHER';
-  }
-
-  isClient(): boolean {
-    return this.getRole() === 'CLIENT';
-  }
-
-  canCreateShipment(): boolean {
-
-    const role = this.getRole();
-
-    return (
-      role === 'CLIENT' ||
-      role === 'DISPATCHER'
+    this.setRole(
+      role
     );
+
   }
 
-  canChangeShipmentStatus(): boolean {
 
-    const role = this.getRole();
-
-    return (
-      role === 'ADMIN' ||
-      role === 'DISPATCHER'
-    );
-  }
-
-  canAccessCatalog(): boolean {
-
-    const role = this.getRole();
-
-    return (
-      role === 'ADMIN' ||
-      role === 'DISPATCHER'
-    );
-  }
+  /* =====================================================
+     LIMPIAR ROL
+  ====================================================== */
 
   clearActiveRole(): void {
 
     sessionStorage.removeItem(
-      this.ACTIVE_ROLE_KEY
+      this.storageKey
     );
+
   }
+
+
+  /* =====================================================
+     VALIDACIÓN DE ROLES
+  ====================================================== */
+
+  isAdmin(): boolean {
+
+    return (
+      this.getRole() ===
+      'ADMIN'
+    );
+
+  }
+
+
+  isDispatcher(): boolean {
+
+    return (
+      this.getRole() ===
+      'DISPATCHER'
+    );
+
+  }
+
+
+  isClient(): boolean {
+
+    return (
+      this.getRole() ===
+      'CLIENT'
+    );
+
+  }
+
+
+  /* =====================================================
+     PERMISOS
+  ====================================================== */
+
+
+  /*
+    Crear envío:
+
+    CLIENT ✅
+    DISPATCHER ✅
+    ADMIN ❌
+  */
+
+  canCreateShipment(): boolean {
+
+    const role =
+      this.getRole();
+
+
+    return (
+      role === 'CLIENT'
+      ||
+      role === 'DISPATCHER'
+    );
+
+  }
+
+
+  /*
+    Cambiar estado:
+
+    ADMIN ✅
+    DISPATCHER ✅
+    CLIENT ❌
+  */
+
+  canChangeShipmentStatus(): boolean {
+
+    const role =
+      this.getRole();
+
+
+    return (
+      role === 'ADMIN'
+      ||
+      role === 'DISPATCHER'
+    );
+
+  }
+
+
+  /*
+    Catálogo:
+
+    ADMIN ✅
+    DISPATCHER ✅
+    CLIENT ❌
+  */
+
+  canAccessCatalog(): boolean {
+
+    const role =
+      this.getRole();
+
+
+    return (
+      role === 'ADMIN'
+      ||
+      role === 'DISPATCHER'
+    );
+
+  }
+
 }

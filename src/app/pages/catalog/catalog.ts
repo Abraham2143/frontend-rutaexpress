@@ -1,26 +1,36 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
+
+import {
+  CommonModule
+} from '@angular/common';
+
+import {
+  Router,
+  RouterLink
+} from '@angular/router';
+
+import {
+  MsalService
+} from '@azure/msal-angular';
 
 import {
   RoleService,
   UserRole
 } from '../../core/role';
 
-
-interface CatalogService {
-  id: number;
-  name: string;
-  description: string;
-  deliveryTime: string;
-  price: number;
-  capacity: number;
-  status: 'Activo' | 'Inactivo';
-}
+import {
+  CatalogService,
+  CatalogServiceItem
+} from '../../service/catalog.service';
 
 
 @Component({
   selector: 'app-catalog',
+
   standalone: true,
 
   imports: [
@@ -28,158 +38,300 @@ interface CatalogService {
     RouterLink
   ],
 
-  templateUrl: './catalog.html',
-  styleUrl: './catalog.css'
+  templateUrl:
+    './catalog.html',
+
+  styleUrl:
+    './catalog.css'
 })
-export class Catalog implements OnInit {
+export class Catalog
+  implements OnInit {
 
 
-  /* =========================
-     DATOS DEL CATÁLOGO
-  ========================== */
+  /* =====================================================
+     DATOS
+  ====================================================== */
 
-  services: CatalogService[] = [
+  services:
+    CatalogServiceItem[] = [];
 
-    {
-      id: 1,
-      name: 'Estándar',
-      description:
-        'Servicio de despacho económico para entregas regulares.',
-      deliveryTime: '3 a 5 días',
-      price: 4990,
-      capacity: 120,
-      status: 'Activo'
-    },
 
-    {
-      id: 2,
-      name: 'Express',
-      description:
-        'Servicio rápido para envíos que requieren prioridad.',
-      deliveryTime: '1 a 2 días',
-      price: 7990,
-      capacity: 75,
-      status: 'Activo'
-    },
+  loading =
+    false;
 
-    {
-      id: 3,
-      name: 'Same Day',
-      description:
-        'Servicio de entrega durante el mismo día.',
-      deliveryTime: 'Mismo día',
-      price: 11990,
-      capacity: 40,
-      status: 'Activo'
-    }
 
-  ];
+  errorMessage =
+    '';
 
 
   constructor(
-    private router: Router,
-    public roleService: RoleService
+
+    private router:
+      Router,
+
+    private authService:
+      MsalService,
+
+    public roleService:
+      RoleService,
+
+    private catalogService:
+      CatalogService,
+
+    private changeDetector:
+      ChangeDetectorRef
+
   ) {}
 
 
+  /* =====================================================
+     INICIO
+  ====================================================== */
+
   ngOnInit(): void {
 
-    /*
-      Catálogo:
-      ADMIN ✅
-      DISPATCHER ✅
-      CLIENT ❌
-    */
-    if (!this.roleService.canAccessCatalog()) {
 
-      this.router.navigate(['/dashboard']);
+    if (
+      !this.roleService
+        .canAccessCatalog()
+    ) {
+
+      this.router.navigate([
+        '/dashboard'
+      ]);
+
+      return;
 
     }
 
+
+    this.loadCatalog();
+
   }
 
 
-  /* =========================
+  /* =====================================================
+     CARGAR CATÁLOGO
+  ====================================================== */
+
+  loadCatalog(): void {
+
+
+    this.loading =
+      true;
+
+
+    this.errorMessage =
+      '';
+
+
+    this.catalogService
+      .getServices()
+      .subscribe({
+
+        next: (
+          services:
+            CatalogServiceItem[]
+        ) => {
+
+
+          console.log(
+            'Servicios listos para Angular:',
+            services
+          );
+
+
+          this.services =
+            [...services];
+
+
+          this.loading =
+            false;
+
+
+          /*
+            Fuerza a Angular a refrescar
+            inmediatamente la pantalla
+            después de recibir el backend.
+          */
+          this.changeDetector
+            .detectChanges();
+
+        },
+
+
+        error: (
+          error:
+            unknown
+        ) => {
+
+
+          console.error(
+            'Error cargando catálogo:',
+            error
+          );
+
+
+          this.errorMessage =
+            'No fue posible cargar el catálogo.';
+
+
+          this.loading =
+            false;
+
+
+          this.changeDetector
+            .detectChanges();
+
+        }
+
+      });
+
+  }
+
+
+  /* =====================================================
      ROLES
-  ========================== */
+  ====================================================== */
 
-  get currentRole(): UserRole | null {
+  get currentRole():
+    UserRole | null {
 
-    return this.roleService.getRole();
-
-  }
-
-
-  get isAdmin(): boolean {
-
-    return this.roleService.isAdmin();
+    return this.roleService
+      .getRole();
 
   }
 
 
-  get isDispatcher(): boolean {
+  get isAdmin():
+    boolean {
 
-    return this.roleService.isDispatcher();
+    return this.roleService
+      .isAdmin();
 
   }
 
 
-  get roleName(): string {
+  get isDispatcher():
+    boolean {
 
-    if (this.currentRole === 'ADMIN') {
+    return this.roleService
+      .isDispatcher();
+
+  }
+
+
+  get roleName():
+    string {
+
+
+    if (
+      this.currentRole ===
+      'ADMIN'
+    ) {
 
       return 'Administrador';
 
     }
 
-    if (this.currentRole === 'DISPATCHER') {
+
+    if (
+      this.currentRole ===
+      'DISPATCHER'
+    ) {
 
       return 'Despachador';
 
     }
+
 
     return 'Sin acceso';
 
   }
 
 
-  /* =========================
+  /* =====================================================
      ESTADÍSTICAS
-  ========================== */
+  ====================================================== */
 
-  get activeServices(): number {
+  get activeServices():
+    number {
 
-    return this.services.filter(
-      service => service.status === 'Activo'
-    ).length;
-
-  }
-
-
-  get totalCapacity(): number {
-
-    return this.services.reduce(
-      (total, service) =>
-        total + service.capacity,
-      0
-    );
+    return this.services
+      .filter(
+        service =>
+          service.status ===
+          'Activo'
+      )
+      .length;
 
   }
 
 
-  get minimumPrice(): number {
+  get totalCapacity():
+    number {
 
-    if (this.services.length === 0) {
+    return this.services
+      .reduce(
+
+        (
+          total,
+          service
+        ) =>
+          total
+          +
+          service.capacity,
+
+        0
+
+      );
+
+  }
+
+
+  get minimumPrice():
+    number {
+
+
+    if (
+      this.services.length === 0
+    ) {
 
       return 0;
 
     }
 
+
     return Math.min(
+
       ...this.services.map(
-        service => service.price
+        service =>
+          service.price
       )
+
     );
+
+  }
+
+
+  /* =====================================================
+     CERRAR SESIÓN
+  ====================================================== */
+
+  logout(): void {
+
+
+    this.roleService
+      .clearActiveRole();
+
+
+    this.authService
+      .logoutRedirect({
+
+        postLogoutRedirectUri:
+          'http://localhost:4200/login'
+
+      });
 
   }
 
