@@ -26,13 +26,10 @@
       </p>
 
 
-      <!-- INICIO -->
-
       <a
         class="menu-item"
         routerLink="/dashboard"
       >
-
         <span class="menu-icon">
           ⌂
         </span>
@@ -40,17 +37,13 @@
         <span>
           Inicio
         </span>
-
       </a>
 
-
-      <!-- ENVÍOS -->
 
       <a
         class="menu-item active"
         routerLink="/shipments"
       >
-
         <span class="menu-icon">
           ▣
         </span>
@@ -58,19 +51,14 @@
         <span>
           Envíos
         </span>
-
       </a>
 
-
-      <!-- CATÁLOGO
-           SOLO ADMIN / DESPACHADOR -->
 
       <a
         *ngIf="canAccessCatalog"
         class="menu-item"
         routerLink="/catalog"
       >
-
         <span class="menu-icon">
           ◇
         </span>
@@ -78,7 +66,6 @@
         <span>
           Catálogo
         </span>
-
       </a>
 
     </nav>
@@ -87,13 +74,10 @@
 
 
   <!-- =====================================================
-       CONTENIDO PRINCIPAL
+       CONTENIDO
   ====================================================== -->
 
   <main class="content">
-
-
-    <!-- HEADER -->
 
     <header class="header">
 
@@ -110,30 +94,19 @@
       </div>
 
 
-      <!-- CLIENTE Y DESPACHADOR PUEDEN CREAR -->
-
       <button
         *ngIf="canCreateShipment"
         class="new-button"
         type="button"
         (click)="openModal()"
       >
-
         ＋ Nuevo envío
-
       </button>
 
     </header>
 
 
-    <!-- =====================================================
-         CONTENIDO
-    ====================================================== -->
-
     <section class="body">
-
-
-      <!-- INTRODUCCIÓN -->
 
       <div class="intro">
 
@@ -143,18 +116,15 @@
 
         <p>
           Consulta y administra los envíos
-          disponibles en RutaExpress.
+          registrados en RutaExpress.
         </p>
 
       </div>
 
 
-      <!-- =====================================================
-           RESUMEN
-      ====================================================== -->
+      <!-- RESUMEN -->
 
       <div class="summary">
-
 
         <div class="summary-card">
 
@@ -184,14 +154,48 @@
       </div>
 
 
-      <!-- =====================================================
-           FILTROS
-      ====================================================== -->
+      <!-- CARGANDO -->
+
+      <div
+        class="form-info"
+        *ngIf="loading"
+      >
+
+        <span>
+          i
+        </span>
+
+        <p>
+          Cargando envíos...
+        </p>
+
+      </div>
+
+
+      <!-- ERROR -->
+
+      <div
+        class="form-info"
+        *ngIf="
+          errorMessage &&
+          !showModal
+        "
+      >
+
+        <span>
+          !
+        </span>
+
+        <p>
+          {{ errorMessage }}
+        </p>
+
+      </div>
+
+
+      <!-- FILTROS -->
 
       <section class="filters">
-
-
-        <!-- BUSCADOR -->
 
         <div class="search">
 
@@ -202,13 +206,11 @@
           <input
             type="text"
             [(ngModel)]="searchTerm"
-            placeholder="Buscar por ID, destinatario o comuna..."
+            placeholder="Buscar por tracking, destinatario, cliente o destino..."
           >
 
         </div>
 
-
-        <!-- ESTADO -->
 
         <select
           [(ngModel)]="statusFilter"
@@ -218,16 +220,28 @@
             Todos los estados
           </option>
 
-          <option value="Pendiente">
+          <option value="CREADO">
             Pendiente
           </option>
 
-          <option value="En tránsito">
+          <option value="ACEPTADO">
+            Aceptado
+          </option>
+
+          <option value="EN_BODEGA">
+            En bodega
+          </option>
+
+          <option value="EN_RUTA">
             En tránsito
           </option>
 
-          <option value="Entregado">
+          <option value="ENTREGADO">
             Entregado
+          </option>
+
+          <option value="CANCELADO">
+            Cancelado
           </option>
 
         </select>
@@ -235,16 +249,11 @@
       </section>
 
 
-      <!-- =====================================================
-           TABLA
-      ====================================================== -->
+      <!-- TABLA -->
 
       <section class="table-card">
 
         <table>
-
-
-          <!-- CABECERA -->
 
           <thead>
 
@@ -274,12 +283,6 @@
                 ESTADO
               </th>
 
-
-              <!--
-                SOLO ADMIN Y DESPACHADOR
-                VEN ACCIONES DE ESTADO
-              -->
-
               <th
                 *ngIf="canChangeStatus"
               >
@@ -291,8 +294,6 @@
           </thead>
 
 
-          <!-- CUERPO -->
-
           <tbody>
 
             <tr
@@ -302,53 +303,45 @@
               "
             >
 
-
-              <!-- ID -->
-
               <td class="id">
-
-                #{{ shipment.id }}
-
+                #{{ shipment.trackingNumber }}
               </td>
 
-
-              <!-- DESTINATARIO -->
 
               <td>
 
                 <strong>
-                  {{ shipment.destinatario }}
+                  {{ shipment.destinatarioNombre }}
                 </strong>
 
                 <small>
-                  {{ shipment.direccion }}
+                  {{ shipment.destinatarioEmail }}
                 </small>
 
               </td>
 
 
-              <!-- COMUNA -->
-
               <td>
-                {{ shipment.comuna }}
+
+                {{ shipment.direccionDestino }}
+
+                <small>
+                  Desde:
+                  {{ shipment.direccionOrigen }}
+                </small>
+
               </td>
 
 
-              <!-- SERVICIO -->
-
               <td>
-                {{ shipment.servicio }}
+                Servicio #{{ shipment.servicioId }}
               </td>
 
 
-              <!-- FECHA -->
-
               <td>
-                {{ shipment.fecha }}
+                {{ formatDate(shipment.fechaCreacion) }}
               </td>
 
-
-              <!-- ESTADO -->
 
               <td>
 
@@ -356,32 +349,26 @@
                   class="status"
 
                   [class.pending]="
-                    shipment.estado ===
-                    'Pendiente'
+                    shipment.status === 'CREADO' ||
+                    shipment.status === 'ACEPTADO'
                   "
 
                   [class.transit]="
-                    shipment.estado ===
-                    'En tránsito'
+                    shipment.status === 'EN_BODEGA' ||
+                    shipment.status === 'EN_RUTA'
                   "
 
                   [class.delivered]="
-                    shipment.estado ===
-                    'Entregado'
+                    shipment.status === 'ENTREGADO'
                   "
                 >
 
-                  {{ shipment.estado }}
+                  {{ getStatusLabel(shipment.status) }}
 
                 </span>
 
               </td>
 
-
-              <!-- =================================================
-                   ACCIÓN
-                   SOLO DESPACHADOR / ADMIN
-              ================================================== -->
 
               <td
                 *ngIf="canChangeStatus"
@@ -389,43 +376,26 @@
 
                 <button
                   class="action-button"
-
                   type="button"
 
                   [disabled]="
-                    shipment.estado ===
-                    'Entregado'
+                    getNextStatus(
+                      shipment.status
+                    ) === null
                   "
 
                   (click)="
-                    changeStatus(shipment)
+                    changeStatus(
+                      shipment
+                    )
                   "
                 >
 
-
-                  @if (
-                    shipment.estado ===
-                    'Pendiente'
-                  ) {
-
-                    Despachar
-
-                  }
-
-                  @else if (
-                    shipment.estado ===
-                    'En tránsito'
-                  ) {
-
-                    Entregar
-
-                  }
-
-                  @else {
-
-                    Completado
-
-                  }
+                  {{
+                    getActionLabel(
+                      shipment.status
+                    )
+                  }}
 
                 </button>
 
@@ -438,12 +408,10 @@
         </table>
 
 
-        <!-- SIN RESULTADOS -->
-
         <div
           class="empty"
-
           *ngIf="
+            !loading &&
             filteredShipments.length === 0
           "
         >
@@ -461,8 +429,6 @@
 
   <!-- =====================================================
        MODAL NUEVO ENVÍO
-
-       SOLO CLIENTE / DESPACHADOR
   ====================================================== -->
 
   <div
@@ -476,7 +442,6 @@
     (click)="closeModal()"
   >
 
-
     <div
       class="modal"
 
@@ -484,9 +449,6 @@
         $event.stopPropagation()
       "
     >
-
-
-      <!-- HEADER MODAL -->
 
       <div class="modal-header">
 
@@ -506,157 +468,132 @@
 
         <button
           class="close"
-
           type="button"
-
+          [disabled]="saving"
           (click)="closeModal()"
         >
-
           ×
-
         </button>
 
       </div>
 
 
-      <!-- =================================================
-           FORMULARIO
-      ================================================== -->
-
       <form
         (ngSubmit)="createShipment()"
       >
 
+        <div class="form-group">
 
-        <!-- DESTINATARIO -->
+          <label for="clienteId">
+            Cliente
+          </label>
+
+          <input
+            id="clienteId"
+            type="text"
+            name="clienteId"
+            [(ngModel)]="newShipment.clienteId"
+            placeholder="Ej: cliente-001"
+            maxlength="100"
+            required
+          >
+
+        </div>
+
 
         <div class="form-group">
 
-          <label
-            for="destinatario"
-          >
+          <label for="destinatarioNombre">
             Destinatario
           </label>
 
-
           <input
-            id="destinatario"
-
+            id="destinatarioNombre"
             type="text"
-
-            name="destinatario"
-
-            [(ngModel)]="
-              newShipment.destinatario
-            "
-
+            name="destinatarioNombre"
+            [(ngModel)]="newShipment.destinatarioNombre"
             placeholder="Ej: María González"
-
+            maxlength="150"
             required
           >
 
         </div>
 
 
-        <!-- DIRECCIÓN -->
+        <div class="form-group">
+
+          <label for="destinatarioEmail">
+            Correo del destinatario
+          </label>
+
+          <input
+            id="destinatarioEmail"
+            type="email"
+            name="destinatarioEmail"
+            [(ngModel)]="newShipment.destinatarioEmail"
+            placeholder="Ej: maria@correo.cl"
+            maxlength="254"
+            required
+          >
+
+        </div>
+
 
         <div class="form-group">
 
-          <label
-            for="direccion"
-          >
-            Dirección
+          <label for="direccionOrigen">
+            Dirección de origen
           </label>
 
-
           <input
-            id="direccion"
-
+            id="direccionOrigen"
             type="text"
-
-            name="direccion"
-
-            [(ngModel)]="
-              newShipment.direccion
-            "
-
+            name="direccionOrigen"
+            [(ngModel)]="newShipment.direccionOrigen"
             placeholder="Ej: Av. Providencia 1234"
-
+            maxlength="300"
             required
           >
 
         </div>
 
 
-        <!-- COMUNA -->
-
         <div class="form-group">
 
-          <label
-            for="comuna"
-          >
-            Comuna
+          <label for="direccionDestino">
+            Dirección de destino
           </label>
-
 
           <input
-            id="comuna"
-
+            id="direccionDestino"
             type="text"
-
-            name="comuna"
-
-            [(ngModel)]="
-              newShipment.comuna
-            "
-
-            placeholder="Ej: Providencia"
-
+            name="direccionDestino"
+            [(ngModel)]="newShipment.direccionDestino"
+            placeholder="Ej: Av. Apoquindo 4500"
+            maxlength="300"
             required
           >
 
         </div>
 
 
-        <!-- SERVICIO -->
-
         <div class="form-group">
 
-          <label
-            for="servicio"
-          >
-            Tipo de servicio
+          <label for="servicioId">
+            ID del servicio
           </label>
 
-
-          <select
-            id="servicio"
-
-            name="servicio"
-
-            [(ngModel)]="
-              newShipment.servicio
-            "
+          <input
+            id="servicioId"
+            type="number"
+            name="servicioId"
+            [(ngModel)]="newShipment.servicioId"
+            min="1"
+            required
           >
-
-            <option value="Estándar">
-              Estándar
-            </option>
-
-            <option value="Express">
-              Express
-            </option>
-
-            <option value="Same Day">
-              Same Day
-            </option>
-
-          </select>
 
         </div>
 
-
-        <!-- INFORMACIÓN -->
 
         <div class="form-info">
 
@@ -665,44 +602,52 @@
           </span>
 
           <p>
-
-            El envío será registrado
-            inicialmente con estado
-
-            <strong>
-              Pendiente
-            </strong>.
-
+            El envío será registrado inicialmente con estado
+            <strong>Pendiente</strong>.
           </p>
 
         </div>
 
 
-        <!-- BOTONES -->
+        <div
+          class="form-info"
+          *ngIf="errorMessage"
+        >
+
+          <span>
+            !
+          </span>
+
+          <p>
+            {{ errorMessage }}
+          </p>
+
+        </div>
+
 
         <div class="modal-actions">
 
-
           <button
             type="button"
-
             class="cancel-button"
-
+            [disabled]="saving"
             (click)="closeModal()"
           >
-
             Cancelar
-
           </button>
 
 
           <button
             type="submit"
-
             class="save-button"
+            [disabled]="saving"
           >
 
-            Registrar envío
+            {{
+              saving
+                ? 'Registrando...'
+                : 'Registrar envío'
+            }}
 
           </button>
 

@@ -1,4 +1,9 @@
-import { Component } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  OnInit
+} from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,333 +13,773 @@ import {
   UserRole
 } from '../../core/role';
 
-
-interface Shipment {
-  id: string;
-  destinatario: string;
-  direccion: string;
-  comuna: string;
-  servicio: string;
-  estado: string;
-  fecha: string;
-}
+import {
+  CreateShipmentRequest,
+  ShipmentResponse,
+  ShipmentsService,
+  ShipmentStatus
+} from '../../service/shipments.service';
 
 
 @Component({
   selector: 'app-shipments',
+
   imports: [
     CommonModule,
     FormsModule,
     RouterLink
   ],
+
   templateUrl: './shipments.html',
   styleUrl: './shipments.css'
 })
-export class Shipments {
+export class Shipments implements OnInit {
+
+  /* =====================================================
+     DATOS
+  ===================================================== */
+
+  shipments: ShipmentResponse[] = [];
 
   searchTerm = '';
-  statusFilter = 'Todos';
+
+  statusFilter:
+    'Todos' | ShipmentStatus =
+    'Todos';
 
   showModal = false;
 
+  loading = false;
 
-  /* =========================
-     ENVÍOS DE PRUEBA
-  ========================== */
+  saving = false;
 
-  shipments: Shipment[] = [
-
-    {
-      id: 'RX-1024',
-      destinatario: 'Camila González',
-      direccion: 'Av. Providencia 1234',
-      comuna: 'Providencia',
-      servicio: 'Express',
-      estado: 'En tránsito',
-      fecha: '13/09/2026'
-    },
-
-    {
-      id: 'RX-1023',
-      destinatario: 'Felipe Muñoz',
-      direccion: 'Av. Apoquindo 4500',
-      comuna: 'Las Condes',
-      servicio: 'Same Day',
-      estado: 'Entregado',
-      fecha: '13/09/2026'
-    },
-
-    {
-      id: 'RX-1022',
-      destinatario: 'Daniela Soto',
-      direccion: 'Irarrázaval 2200',
-      comuna: 'Ñuñoa',
-      servicio: 'Estándar',
-      estado: 'Pendiente',
-      fecha: '12/09/2026'
-    },
-
-    {
-      id: 'RX-1021',
-      destinatario: 'Martín Rojas',
-      direccion: 'Gran Avenida 3560',
-      comuna: 'San Miguel',
-      servicio: 'Express',
-      estado: 'En tránsito',
-      fecha: '12/09/2026'
-    }
-
-  ];
+  errorMessage = '';
 
 
-  /* =========================
-     FORMULARIO NUEVO ENVÍO
-  ========================== */
+  /* =====================================================
+     NUEVO ENVÍO
+  ===================================================== */
 
-  newShipment = {
-    destinatario: '',
-    direccion: '',
-    comuna: '',
-    servicio: 'Estándar'
+  newShipment: CreateShipmentRequest = {
+
+    clienteId: '',
+
+    destinatarioNombre: '',
+
+    destinatarioEmail: '',
+
+    direccionOrigen: '',
+
+    direccionDestino: '',
+
+    servicioId: 1
   };
 
 
-  /* =========================
-     SERVICIO DE ROLES
-  ========================== */
+  /* =====================================================
+     CONSTRUCTOR
+  ===================================================== */
 
   constructor(
-    public roleService: RoleService
+
+    public roleService:
+      RoleService,
+
+    private shipmentsService:
+      ShipmentsService,
+
+    private changeDetector:
+      ChangeDetectorRef
+
   ) {}
 
 
-  /* =========================
-     ROL ACTUAL
-  ========================== */
+  /* =====================================================
+     INICIO
+  ===================================================== */
 
-  get currentRole(): UserRole | null {
-  return this.roleService.getRole();
+  ngOnInit(): void {
+
+    this.loadShipments();
+
   }
 
 
-  changeRole(role: UserRole): void {
-    this.roleService.setRole(role);
+  /* =====================================================
+     CARGAR ENVÍOS REALES
+  ===================================================== */
+
+  loadShipments(): void {
+
+    this.loading = true;
+
+    this.errorMessage = '';
+
+
+    this.shipmentsService
+      .getShipments()
+      .subscribe({
+
+        next: (
+          shipments
+        ) => {
+
+          console.log(
+            'Envíos recibidos:',
+            shipments
+          );
+
+
+          this.shipments = [
+            ...shipments
+          ];
+
+
+          this.loading = false;
+
+
+          this.changeDetector
+            .detectChanges();
+        },
+
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Error cargando envíos:',
+            error
+          );
+
+
+          this.errorMessage =
+            'No fue posible cargar los envíos.';
+
+
+          this.loading = false;
+
+
+          this.changeDetector
+            .detectChanges();
+        }
+
+      });
+
+  }
+
+
+  /* =====================================================
+     ROL
+  ===================================================== */
+
+  get currentRole():
+    UserRole | null {
+
+    return this.roleService
+      .getRole();
+  }
+
+
+  changeRole(
+    role: UserRole
+  ): void {
+
+    this.roleService
+      .setRole(role);
   }
 
 
   get roleName(): string {
 
-    if (this.currentRole === 'ADMIN') {
+    if (
+      this.currentRole ===
+      'ADMIN'
+    ) {
+
       return 'Administrador';
     }
 
-    if (this.currentRole === 'DISPATCHER') {
+
+    if (
+      this.currentRole ===
+      'DISPATCHER'
+    ) {
+
       return 'Despachador';
     }
+
 
     return 'Cliente';
   }
 
 
-  /* =========================
-     PERMISOS SEGÚN EL CASO
-  ========================== */
+  /* =====================================================
+     PERMISOS
+  ===================================================== */
 
-  get canCreateShipment(): boolean {
-    return this.roleService.canCreateShipment();
+  get canCreateShipment():
+    boolean {
+
+    return this.roleService
+      .canCreateShipment();
   }
 
 
-  get canChangeStatus(): boolean {
-    return this.roleService.canChangeShipmentStatus();
+  get canChangeStatus():
+    boolean {
+
+    return this.roleService
+      .canChangeShipmentStatus();
   }
 
 
-  get canAccessCatalog(): boolean {
-    return this.roleService.canAccessCatalog();
+  get canAccessCatalog():
+    boolean {
+
+    return this.roleService
+      .canAccessCatalog();
   }
 
 
-  /* =========================
+  /* =====================================================
      CONTADORES
-  ========================== */
+  ===================================================== */
 
-  get pendingCount(): number {
+  get pendingCount():
+    number {
 
-    return this.shipments.filter(
-      shipment =>
-        shipment.estado === 'Pendiente'
-    ).length;
-
+    return this.shipments
+      .filter(
+        shipment =>
+          shipment.status ===
+          'CREADO'
+      )
+      .length;
   }
 
 
-  /* =========================
-     FILTRO DE ENVÍOS
-  ========================== */
+  /* =====================================================
+     FILTRAR ENVÍOS
+  ===================================================== */
 
-  get filteredShipments(): Shipment[] {
+  get filteredShipments():
+    ShipmentResponse[] {
 
-    return this.shipments.filter(shipment => {
-
-      const text =
-        this.searchTerm.toLowerCase();
-
-      const matchesSearch =
-        shipment.id
-          .toLowerCase()
-          .includes(text) ||
-
-        shipment.destinatario
-          .toLowerCase()
-          .includes(text) ||
-
-        shipment.comuna
-          .toLowerCase()
-          .includes(text);
+    const text =
+      this.searchTerm
+        .trim()
+        .toLowerCase();
 
 
-      const matchesStatus =
-        this.statusFilter === 'Todos' ||
-        shipment.estado === this.statusFilter;
+    return this.shipments
+      .filter(
+        shipment => {
+
+          const matchesSearch =
+
+            shipment
+              .trackingNumber
+              .toLowerCase()
+              .includes(text)
+
+            ||
+
+            shipment
+              .destinatarioNombre
+              .toLowerCase()
+              .includes(text)
+
+            ||
+
+            shipment
+              .direccionDestino
+              .toLowerCase()
+              .includes(text)
+
+            ||
+
+            shipment
+              .clienteId
+              .toLowerCase()
+              .includes(text);
 
 
-      return (
-        matchesSearch &&
-        matchesStatus
+          const matchesStatus =
+
+            this.statusFilter ===
+              'Todos'
+
+            ||
+
+            shipment.status ===
+              this.statusFilter;
+
+
+          return (
+            matchesSearch &&
+            matchesStatus
+          );
+
+        }
       );
-
-    });
-
   }
 
 
-  /* =========================
-     ABRIR NUEVO ENVÍO
-  ========================== */
+  /* =====================================================
+     MODAL
+  ===================================================== */
 
   openModal(): void {
 
-    // Solo Cliente y Despachador
-    // pueden crear envíos.
-    if (!this.canCreateShipment) {
+    if (
+      !this.canCreateShipment
+    ) {
       return;
     }
+
+
+    this.errorMessage = '';
 
     this.showModal = true;
   }
 
 
-  /* =========================
-     CERRAR FORMULARIO
-  ========================== */
-
   closeModal(): void {
+
+    if (
+      this.saving
+    ) {
+      return;
+    }
+
+
     this.showModal = false;
   }
 
 
-  /* =========================
+  /* =====================================================
      CREAR ENVÍO
-  ========================== */
+  ===================================================== */
 
   createShipment(): void {
 
-    // Seguridad visual de demostración.
-    if (!this.canCreateShipment) {
-      return;
-    }
-
-
     if (
-      !this.newShipment.destinatario ||
-      !this.newShipment.direccion ||
-      !this.newShipment.comuna
+      !this.canCreateShipment
     ) {
       return;
     }
 
 
-    const shipment: Shipment = {
+    if (
+      !this.newShipment.clienteId.trim() ||
+      !this.newShipment.destinatarioNombre.trim() ||
+      !this.newShipment.destinatarioEmail.trim() ||
+      !this.newShipment.direccionOrigen.trim() ||
+      !this.newShipment.direccionDestino.trim() ||
+      !this.newShipment.servicioId
+    ) {
 
-      id:
-        'RX-' +
-        (1021 + this.shipments.length),
+      this.errorMessage =
+        'Debes completar todos los campos.';
 
-      destinatario:
-        this.newShipment.destinatario,
-
-      direccion:
-        this.newShipment.direccion,
-
-      comuna:
-        this.newShipment.comuna,
-
-      servicio:
-        this.newShipment.servicio,
-
-      estado:
-        'Pendiente',
-
-      fecha:
-        new Date()
-          .toLocaleDateString('es-CL')
-
-    };
+      return;
+    }
 
 
-    this.shipments.unshift(shipment);
+    this.saving = true;
+
+    this.errorMessage = '';
 
 
-    // Limpiar formulario
-    this.newShipment = {
+    this.shipmentsService
+      .createShipment(
+        this.newShipment
+      )
+      .subscribe({
 
-      destinatario: '',
-      direccion: '',
-      comuna: '',
-      servicio: 'Estándar'
+        next: (
+          shipment
+        ) => {
 
-    };
+          console.log(
+            'Envío creado:',
+            shipment
+          );
 
 
-    this.closeModal();
+          this.shipments = [
+            shipment,
+            ...this.shipments
+          ];
+
+
+          this.resetForm();
+
+
+          this.saving = false;
+
+          this.showModal = false;
+
+
+          this.changeDetector
+            .detectChanges();
+        },
+
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Error creando envío:',
+            error
+          );
+
+
+          this.errorMessage =
+            this.getErrorMessage(
+              error,
+              'No fue posible registrar el envío.'
+            );
+
+
+          this.saving = false;
+
+
+          this.changeDetector
+            .detectChanges();
+        }
+
+      });
 
   }
 
 
-  /* =========================
+  /* =====================================================
+     LIMPIAR FORMULARIO
+  ===================================================== */
+
+  private resetForm(): void {
+
+    this.newShipment = {
+
+      clienteId: '',
+
+      destinatarioNombre: '',
+
+      destinatarioEmail: '',
+
+      direccionOrigen: '',
+
+      direccionDestino: '',
+
+      servicioId: 1
+    };
+
+  }
+
+
+  /* =====================================================
      CAMBIAR ESTADO
-  ========================== */
+  ===================================================== */
 
   changeStatus(
-    shipment: Shipment
+    shipment:
+      ShipmentResponse
   ): void {
 
-    // Solo Despachador y Admin
-    // pueden cambiar estados.
-    if (!this.canChangeStatus) {
+    if (
+      !this.canChangeStatus
+    ) {
       return;
     }
 
 
+    const nextStatus =
+      this.getNextStatus(
+        shipment.status
+      );
+
+
     if (
-      shipment.estado === 'Pendiente'
+      !nextStatus
     ) {
-
-      shipment.estado =
-        'En tránsito';
-
+      return;
     }
 
-    else if (
-      shipment.estado === 'En tránsito'
+
+    this.errorMessage = '';
+
+
+    this.shipmentsService
+      .updateStatus(
+        shipment.id,
+        nextStatus
+      )
+      .subscribe({
+
+        next: (
+          updatedShipment
+        ) => {
+
+          console.log(
+            'Envío actualizado:',
+            updatedShipment
+          );
+
+
+          const index =
+            this.shipments
+              .findIndex(
+                item =>
+                  item.id ===
+                  updatedShipment.id
+              );
+
+
+          if (
+            index !== -1
+          ) {
+
+            this.shipments[index] =
+              updatedShipment;
+
+
+            this.shipments = [
+              ...this.shipments
+            ];
+          }
+
+
+          this.changeDetector
+            .detectChanges();
+        },
+
+
+        error: (
+          error
+        ) => {
+
+          console.error(
+            'Error cambiando estado:',
+            error
+          );
+
+
+          this.errorMessage =
+            this.getErrorMessage(
+              error,
+              'No fue posible cambiar el estado.'
+            );
+
+
+          this.changeDetector
+            .detectChanges();
+        }
+
+      });
+
+  }
+
+
+  /* =====================================================
+     SIGUIENTE ESTADO
+  ===================================================== */
+
+  getNextStatus(
+    status:
+      ShipmentStatus
+  ): ShipmentStatus | null {
+
+    switch (
+      status
     ) {
 
-      shipment.estado =
-        'Entregado';
+      case 'CREADO':
 
+        return 'ACEPTADO';
+
+
+      case 'ACEPTADO':
+
+        return 'EN_BODEGA';
+
+
+      case 'EN_BODEGA':
+
+        return 'EN_RUTA';
+
+
+      case 'EN_RUTA':
+
+        return 'ENTREGADO';
+
+
+      default:
+
+        return null;
     }
 
+  }
+
+
+  /* =====================================================
+     TEXTO DEL BOTÓN
+  ===================================================== */
+
+  getActionLabel(
+    status:
+      ShipmentStatus
+  ): string {
+
+    switch (
+      status
+    ) {
+
+      case 'CREADO':
+
+        return 'Aceptar';
+
+
+      case 'ACEPTADO':
+
+        return 'Enviar a bodega';
+
+
+      case 'EN_BODEGA':
+
+        return 'Despachar';
+
+
+      case 'EN_RUTA':
+
+        return 'Entregar';
+
+
+      case 'ENTREGADO':
+
+        return 'Completado';
+
+
+      case 'CANCELADO':
+
+        return 'Cancelado';
+    }
+
+  }
+
+
+  /* =====================================================
+     ESTADO PARA MOSTRAR
+  ===================================================== */
+
+  getStatusLabel(
+    status:
+      ShipmentStatus
+  ): string {
+
+    switch (
+      status
+    ) {
+
+      case 'CREADO':
+
+        return 'Pendiente';
+
+
+      case 'ACEPTADO':
+
+        return 'Aceptado';
+
+
+      case 'EN_BODEGA':
+
+        return 'En bodega';
+
+
+      case 'EN_RUTA':
+
+        return 'En tránsito';
+
+
+      case 'ENTREGADO':
+
+        return 'Entregado';
+
+
+      case 'CANCELADO':
+
+        return 'Cancelado';
+    }
+
+  }
+
+
+  /* =====================================================
+     FORMATEAR FECHA
+  ===================================================== */
+
+  formatDate(
+    date:
+      string | null
+  ): string {
+
+    if (
+      !date
+    ) {
+      return '-';
+    }
+
+
+    const parsedDate =
+      new Date(date);
+
+
+    if (
+      Number.isNaN(
+        parsedDate.getTime()
+      )
+    ) {
+
+      return date;
+    }
+
+
+    return parsedDate
+      .toLocaleDateString(
+        'es-CL'
+      );
+  }
+
+
+  /* =====================================================
+     MENSAJE BACKEND
+  ===================================================== */
+
+  private getErrorMessage(
+    error: any,
+    fallback: string
+  ): string {
+
+    if (
+      typeof error?.error ===
+      'string'
+    ) {
+
+      return error.error;
+    }
+
+
+    if (
+      error?.error?.message
+    ) {
+
+      return error.error.message;
+    }
+
+
+    return fallback;
   }
 
 }
