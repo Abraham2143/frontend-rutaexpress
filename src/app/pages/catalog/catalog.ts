@@ -97,8 +97,8 @@ export class Catalog implements OnInit {
   }
 
 
-  get currentRole(): UserRole {
-    return this.roleService.getRole();
+  get currentRole(): UserRole | null {
+  return this.roleService.getRole();
   }
 
 

@@ -11,6 +11,7 @@ import {
 
 @Component({
   selector: 'app-dashboard',
+  standalone: true,
 
   imports: [
     CommonModule,
@@ -37,7 +38,8 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
 
     const account =
-      this.authService.instance.getActiveAccount();
+      this.authService.instance.getActiveAccount()
+      ?? this.authService.instance.getAllAccounts()[0];
 
     if (account) {
 
@@ -54,26 +56,41 @@ export class Dashboard implements OnInit {
 
 
       /*
-        Revisamos únicamente los claims.
-        NO imprimimos ningún token.
+        Revisamos los claims entregados
+        por Microsoft Entra.
+
+        No mostramos el token completo.
       */
-      const claims: any =
-        account.idTokenClaims;
+      const claims = account.idTokenClaims as
+        | {
+            name?: string;
+            preferred_username?: string;
+            tid?: string;
+            aud?: string;
+            roles?: string[];
+          }
+        | undefined;
 
 
       console.log(
         'Claims de Microsoft:',
         {
-          name: claims?.['name'],
+          name: claims?.name,
           username:
-            claims?.['preferred_username'],
+            claims?.preferred_username,
           tenant:
-            claims?.['tid'],
+            claims?.tid,
           audience:
-            claims?.['aud'],
+            claims?.aud,
           roles:
-            claims?.['roles']
+            claims?.roles
         }
+      );
+
+
+      console.log(
+        'Roles válidos de RutaExpress:',
+        this.roleService.getAssignedRoles()
       );
 
     }
@@ -85,48 +102,110 @@ export class Dashboard implements OnInit {
      ROLES
   ========================== */
 
-  get currentRole(): UserRole {
+  /**
+   * Rol actualmente seleccionado
+   * para mostrar la interfaz.
+   */
+  get currentRole(): UserRole | null {
+
     return this.roleService.getRole();
+
   }
 
 
+  /**
+   * Roles reales que Microsoft Entra
+   * asignó al usuario.
+   */
+  get assignedRoles(): UserRole[] {
+
+    return this.roleService.getAssignedRoles();
+
+  }
+
+
+  /**
+   * Indica si debemos mostrar
+   * selector de rol.
+   */
+  get hasMultipleRoles(): boolean {
+
+    return this.assignedRoles.length > 1;
+
+  }
+
+
+  /**
+   * Cambia el rol activo.
+   *
+   * RoleService valida que el usuario
+   * realmente posea ese rol.
+   */
   changeRole(role: UserRole): void {
+
     this.roleService.setRole(role);
+
   }
 
 
+  /**
+   * Traduce los valores técnicos
+   * de Microsoft a nombres visibles.
+   */
+  getRoleName(role: UserRole): string {
+
+    const names: Record<UserRole, string> = {
+      ADMIN: 'Administrador',
+      DISPATCHER: 'Despachador',
+      CLIENT: 'Cliente'
+    };
+
+    return names[role];
+
+  }
+
+
+  /**
+   * Nombre del rol actualmente activo.
+   */
   get roleName(): string {
 
-    if (this.currentRole === 'ADMIN') {
-      return 'Administrador';
+    const role = this.currentRole;
+
+    if (!role) {
+      return 'Sin rol asignado';
     }
 
-    if (this.currentRole === 'DISPATCHER') {
-      return 'Despachador';
-    }
-
-    return 'Cliente';
+    return this.getRoleName(role);
 
   }
 
 
   get isAdmin(): boolean {
+
     return this.roleService.isAdmin();
+
   }
 
 
   get isDispatcher(): boolean {
+
     return this.roleService.isDispatcher();
+
   }
 
 
   get isClient(): boolean {
+
     return this.roleService.isClient();
+
   }
 
 
   get canAccessCatalog(): boolean {
+
     return this.roleService.canAccessCatalog();
+
   }
 
 
@@ -135,6 +214,16 @@ export class Dashboard implements OnInit {
   ========================== */
 
   logout(): void {
+
+    /*
+      Eliminamos el rol activo guardado.
+
+      Así, si después inicia sesión
+      otra persona, no hereda la vista
+      del usuario anterior.
+    */
+    this.roleService.clearActiveRole();
+
 
     this.authService.logoutRedirect({
       postLogoutRedirectUri:

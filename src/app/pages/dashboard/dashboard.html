@@ -190,7 +190,7 @@
 
 
       <!-- =====================================================
-           MODO DE ROLES
+           ROLES REALES DE MICROSOFT ENTRA
       ====================================================== -->
 
       <div class="role-selector">
@@ -198,21 +198,47 @@
         <div>
 
           <strong>
-            Modo de roles
+            Rol de acceso
           </strong>
 
-          <p>
-            Selecciona un rol para visualizar los permisos
-            y funciones disponibles en RutaExpress.
+
+          <!-- MÁS DE UN ROL -->
+
+          <p *ngIf="hasMultipleRoles">
+            Selecciona uno de los roles asignados a tu cuenta
+            en Microsoft Entra.
+          </p>
+
+
+          <!-- UN SOLO ROL -->
+
+          <p *ngIf="!hasMultipleRoles && currentRole">
+            Este rol fue asignado a tu cuenta mediante
+            Microsoft Entra.
+          </p>
+
+
+          <!-- SIN ROL -->
+
+          <p *ngIf="!currentRole">
+            Tu cuenta no tiene un rol asignado
+            en RutaExpress.
           </p>
 
         </div>
 
 
-        <div class="demo-role-control">
+        <!-- =====================================================
+             USUARIO CON MÁS DE UN ROL
+        ====================================================== -->
+
+        <div
+          class="demo-role-control"
+          *ngIf="hasMultipleRoles"
+        >
 
           <label>
-            Vista simulada
+            Rol activo
           </label>
 
 
@@ -221,19 +247,54 @@
             (ngModelChange)="changeRole($event)"
           >
 
-            <option value="CLIENT">
-              Cliente
-            </option>
-
-            <option value="DISPATCHER">
-              Despachador
-            </option>
-
-            <option value="ADMIN">
-              Administrador
+            <option
+              *ngFor="let role of assignedRoles"
+              [ngValue]="role"
+            >
+              {{ getRoleName(role) }}
             </option>
 
           </select>
+
+        </div>
+
+
+        <!-- =====================================================
+             USUARIO CON UN SOLO ROL
+        ====================================================== -->
+
+        <div
+          class="demo-role-control"
+          *ngIf="!hasMultipleRoles && currentRole"
+        >
+
+          <label>
+            Rol asignado
+          </label>
+
+          <strong>
+            {{ roleName }}
+          </strong>
+
+        </div>
+
+
+        <!-- =====================================================
+             USUARIO SIN ROL
+        ====================================================== -->
+
+        <div
+          class="demo-role-control"
+          *ngIf="!currentRole"
+        >
+
+          <label>
+            Estado
+          </label>
+
+          <strong>
+            Sin rol asignado
+          </strong>
 
         </div>
 
@@ -275,13 +336,21 @@
             Revisa tus últimos envíos y su estado actual.
           </p>
 
+
+          <!-- SIN ROL -->
+
+          <p *ngIf="!currentRole">
+            Tu usuario está autenticado, pero no posee
+            permisos asignados para utilizar RutaExpress.
+          </p>
+
         </div>
 
 
         <!-- CLIENTE Y DESPACHADOR PUEDEN CREAR -->
 
         <button
-          *ngIf="!isAdmin"
+          *ngIf="isClient || isDispatcher"
           class="primary-button"
           type="button"
           routerLink="/shipments"
