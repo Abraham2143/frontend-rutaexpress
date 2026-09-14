@@ -22,7 +22,21 @@ const TENANT_ID =
 
 
 /* =====================================================
-   API GATEWAY
+   ORIGEN DEL FRONTEND
+
+   Local:
+   http://localhost:4200
+
+   Producción:
+   https://frontend-rutaexpress.vercel.app
+===================================================== */
+
+const APP_ORIGIN =
+  window.location.origin;
+
+
+/* =====================================================
+   API GATEWAY AWS
 ===================================================== */
 
 const API_GATEWAY_URL =
@@ -30,7 +44,7 @@ const API_GATEWAY_URL =
 
 
 /* =====================================================
-   SCOPE DE LA API
+   SCOPE
 ===================================================== */
 
 export const API_SCOPE =
@@ -53,10 +67,10 @@ export const msalInstance =
         `https://login.microsoftonline.com/${TENANT_ID}`,
 
       redirectUri:
-        'http://localhost:4200',
+        APP_ORIGIN,
 
       postLogoutRedirectUri:
-        'http://localhost:4200/login'
+        `${APP_ORIGIN}/login`
 
     },
 
@@ -99,12 +113,6 @@ export const msalGuardConfig:
 
 /* =====================================================
    MSAL INTERCEPTOR
-
-   Angular
-      ↓
-   API Gateway
-      ↓
-   Authorization: Bearer <access_token>
 ===================================================== */
 
 export const msalInterceptorConfig:
@@ -117,21 +125,21 @@ export const msalInterceptorConfig:
       new Map<string, Array<string>>([
 
         [
-          `https://x29deu7hn0.execute-api.us-east-1.amazonaws.com/api/catalog/services`,
+          `${API_GATEWAY_URL}/api/catalog/services`,
           [
             API_SCOPE
           ]
         ],
 
         [
-          `https://x29deu7hn0.execute-api.us-east-1.amazonaws.com/api/catalog/services/*`,
+          `${API_GATEWAY_URL}/api/catalog/services/*`,
           [
             API_SCOPE
           ]
         ],
 
         [
-          `https://x29deu7hn0.execute-api.us-east-1.amazonaws.com/api/shipments`,
+          `${API_GATEWAY_URL}/api/shipments`,
           [
             API_SCOPE
           ]
