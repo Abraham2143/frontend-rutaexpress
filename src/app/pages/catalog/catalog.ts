@@ -1,6 +1,5 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
 import {
@@ -9,24 +8,23 @@ import {
 } from '../../core/role';
 
 
-interface Service {
+interface CatalogService {
   id: number;
-  nombre: string;
-  descripcion: string;
-  tiempo: string;
-  tarifa: number;
-  capacidad: number;
-  capacidadMaxima: number;
-  icono: string;
+  name: string;
+  description: string;
+  deliveryTime: string;
+  price: number;
+  capacity: number;
+  status: 'Activo' | 'Inactivo';
 }
 
 
 @Component({
   selector: 'app-catalog',
+  standalone: true,
 
   imports: [
     CommonModule,
-    FormsModule,
     RouterLink
   ],
 
@@ -35,116 +33,125 @@ interface Service {
 })
 export class Catalog implements OnInit {
 
-  services: Service[] = [
+
+  /* =========================
+     DATOS DEL CATÁLOGO
+  ========================== */
+
+  services: CatalogService[] = [
 
     {
       id: 1,
-      nombre: 'Estándar',
-      descripcion: 'Servicio económico para entregas programadas.',
-      tiempo: '24 - 48 horas',
-      tarifa: 3990,
-      capacidad: 38,
-      capacidadMaxima: 50,
-      icono: '□'
+      name: 'Estándar',
+      description:
+        'Servicio de despacho económico para entregas regulares.',
+      deliveryTime: '3 a 5 días',
+      price: 4990,
+      capacity: 120,
+      status: 'Activo'
     },
 
     {
       id: 2,
-      nombre: 'Express',
-      descripcion: 'Entrega prioritaria para envíos urgentes.',
-      tiempo: 'Durante el día',
-      tarifa: 5990,
-      capacidad: 17,
-      capacidadMaxima: 30,
-      icono: '➜'
+      name: 'Express',
+      description:
+        'Servicio rápido para envíos que requieren prioridad.',
+      deliveryTime: '1 a 2 días',
+      price: 7990,
+      capacity: 75,
+      status: 'Activo'
     },
 
     {
       id: 3,
-      nombre: 'Same Day',
-      descripcion: 'Entrega el mismo día con prioridad máxima.',
-      tiempo: 'Mismo día',
-      tarifa: 7990,
-      capacidad: 8,
-      capacidadMaxima: 20,
-      icono: '⚡'
+      name: 'Same Day',
+      description:
+        'Servicio de entrega durante el mismo día.',
+      deliveryTime: 'Mismo día',
+      price: 11990,
+      capacity: 40,
+      status: 'Activo'
     }
 
   ];
 
 
   constructor(
-    public roleService: RoleService,
-    private router: Router
+    private router: Router,
+    public roleService: RoleService
   ) {}
 
 
   ngOnInit(): void {
 
     /*
-      Según el caso, Cliente no tiene acceso
-      al catálogo.
+      Catálogo:
+      ADMIN ✅
+      DISPATCHER ✅
+      CLIENT ❌
     */
-
     if (!this.roleService.canAccessCatalog()) {
 
-      this.router.navigate([
-        '/dashboard'
-      ]);
+      this.router.navigate(['/dashboard']);
 
     }
 
   }
 
+
+  /* =========================
+     ROLES
+  ========================== */
 
   get currentRole(): UserRole | null {
-  return this.roleService.getRole();
+
+    return this.roleService.getRole();
+
   }
 
 
-  changeRole(
-    role: UserRole
-  ): void {
+  get isAdmin(): boolean {
 
-    this.roleService.setRole(role);
+    return this.roleService.isAdmin();
 
-    /*
-      Si cambia a Cliente,
-      deja de tener acceso.
-    */
+  }
 
-    if (
-      !this.roleService.canAccessCatalog()
-    ) {
 
-      this.router.navigate([
-        '/dashboard'
-      ]);
+  get isDispatcher(): boolean {
 
-    }
+    return this.roleService.isDispatcher();
 
   }
 
 
   get roleName(): string {
 
-    if (
-      this.currentRole === 'ADMIN'
-    ) {
+    if (this.currentRole === 'ADMIN') {
 
       return 'Administrador';
 
     }
 
-    if (
-      this.currentRole === 'DISPATCHER'
-    ) {
+    if (this.currentRole === 'DISPATCHER') {
 
       return 'Despachador';
 
     }
 
-    return 'Cliente';
+    return 'Sin acceso';
+
+  }
+
+
+  /* =========================
+     ESTADÍSTICAS
+  ========================== */
+
+  get activeServices(): number {
+
+    return this.services.filter(
+      service => service.status === 'Activo'
+    ).length;
 
   }
 
@@ -153,49 +160,26 @@ export class Catalog implements OnInit {
 
     return this.services.reduce(
       (total, service) =>
-        total + service.capacidad,
+        total + service.capacity,
       0
     );
 
   }
 
 
-  get maxCapacity(): number {
+  get minimumPrice(): number {
 
-    return this.services.reduce(
-      (total, service) =>
-        total + service.capacidadMaxima,
-      0
+    if (this.services.length === 0) {
+
+      return 0;
+
+    }
+
+    return Math.min(
+      ...this.services.map(
+        service => service.price
+      )
     );
-
-  }
-
-
-  getCapacityPercentage(
-    service: Service
-  ): number {
-
-    return Math.round(
-      (
-        service.capacidad /
-        service.capacidadMaxima
-      ) * 100
-    );
-
-  }
-
-
-  formatPrice(
-    price: number
-  ): string {
-
-    return new Intl.NumberFormat(
-      'es-CL',
-      {
-        style: 'currency',
-        currency: 'CLP'
-      }
-    ).format(price);
 
   }
 
