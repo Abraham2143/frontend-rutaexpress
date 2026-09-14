@@ -1,17 +1,22 @@
 import {
   ApplicationConfig,
   inject,
-  provideAppInitializer,
-  provideBrowserGlobalErrorListeners
+  provideAppInitializer
 } from '@angular/core';
 
-import { provideRouter } from '@angular/router';
+import {
+  provideRouter
+} from '@angular/router';
 
 import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
   withInterceptorsFromDi
 } from '@angular/common/http';
+
+import {
+  IPublicClientApplication
+} from '@azure/msal-browser';
 
 import {
   MSAL_GUARD_CONFIG,
@@ -24,10 +29,8 @@ import {
 } from '@azure/msal-angular';
 
 import {
-  IPublicClientApplication
-} from '@azure/msal-browser';
-
-import { routes } from './app.routes';
+  routes
+} from './app.routes';
 
 import {
   msalGuardConfig,
@@ -36,58 +39,103 @@ import {
 } from './core/auth.config';
 
 
-export const appConfig: ApplicationConfig = {
+export const appConfig:
+  ApplicationConfig = {
 
-  providers: [
+    providers: [
 
-    provideBrowserGlobalErrorListeners(),
+      provideRouter(
+        routes
+      ),
 
-    /*
-      Inicializa MSAL antes de que
-      Angular comience a utilizarlo.
-    */
-    provideAppInitializer(() => {
 
-      const instance =
-        inject(
-          MSAL_INSTANCE
-        ) as IPublicClientApplication;
+      /*
+        Necesario para:
 
-      return instance.initialize();
+        CatalogService
+        ShipmentsService
+        MsalInterceptor
+      */
 
-    }),
+      provideHttpClient(
+        withInterceptorsFromDi()
+      ),
 
-    provideRouter(routes),
 
-    provideHttpClient(
-      withInterceptorsFromDi()
-    ),
+      /* =========================
+         MSAL
+      ========================== */
 
-    {
-      provide: MSAL_INSTANCE,
-      useValue: msalInstance
-    },
+      {
+        provide:
+          MSAL_INSTANCE,
 
-    {
-      provide: MSAL_GUARD_CONFIG,
-      useValue: msalGuardConfig
-    },
+        useValue:
+          msalInstance
+      },
 
-    {
-      provide: MSAL_INTERCEPTOR_CONFIG,
-      useValue: msalInterceptorConfig
-    },
 
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: MsalInterceptor,
-      multi: true
-    },
+      {
+        provide:
+          MSAL_GUARD_CONFIG,
 
-    MsalService,
-    MsalGuard,
-    MsalBroadcastService
+        useValue:
+          msalGuardConfig
+      },
 
-  ]
 
-};
+      {
+        provide:
+          MSAL_INTERCEPTOR_CONFIG,
+
+        useValue:
+          msalInterceptorConfig
+      },
+
+
+      /*
+        Intercepta las llamadas HTTP
+        protegidas y agrega:
+
+        Authorization:
+        Bearer <access_token>
+      */
+
+      {
+        provide:
+          HTTP_INTERCEPTORS,
+
+        useClass:
+          MsalInterceptor,
+
+        multi:
+          true
+      },
+
+
+      MsalService,
+
+      MsalGuard,
+
+      MsalBroadcastService,
+
+
+      /* =========================
+         INICIALIZAR MSAL
+      ========================== */
+
+      provideAppInitializer(() => {
+
+        const instance =
+          inject(
+            MSAL_INSTANCE
+          ) as IPublicClientApplication;
+
+
+        return instance.initialize();
+
+      })
+
+    ]
+
+  };
