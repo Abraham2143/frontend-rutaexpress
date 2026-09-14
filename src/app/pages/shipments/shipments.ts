@@ -112,8 +112,8 @@ export class Shipments {
      ROL ACTUAL
   ========================== */
 
-  get currentRole(): UserRole {
-    return this.roleService.getRole();
+  get currentRole(): UserRole | null {
+  return this.roleService.getRole();
   }
 
 
