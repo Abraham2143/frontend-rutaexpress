@@ -1,7 +1,7 @@
 <div class="page">
 
   <!-- =====================================================
-       SIDEBAR
+        SIDEBAR
   ====================================================== -->
 
   <aside class="sidebar">
@@ -74,7 +74,7 @@
 
 
   <!-- =====================================================
-       CONTENIDO
+        CONTENIDO
   ====================================================== -->
 
   <main class="content">
@@ -147,6 +147,18 @@
 
           <strong>
             {{ pendingCount }}
+          </strong>
+
+        </div>
+
+        <div class="summary-card">
+
+          <span>
+            Servicios catálogo
+          </span>
+
+          <strong>
+            {{ catalogServices.length }}
           </strong>
 
         </div>
@@ -333,8 +345,9 @@
               </td>
 
 
+              <!-- MUESTRA EL NOMBRE REAL DEL SERVICIO DEL CATÁLOGO -->
               <td>
-                Servicio #{{ shipment.servicioId }}
+                {{ getServiceName(shipment.servicioId) }}
               </td>
 
 
@@ -428,7 +441,7 @@
 
 
   <!-- =====================================================
-       MODAL NUEVO ENVÍO
+        MODAL NUEVO ENVÍO
   ====================================================== -->
 
   <div
@@ -577,20 +590,35 @@
         </div>
 
 
+        <!-- SELECTOR DESPLEGABLE DINÁMICO DEL CATÁLOGO -->
         <div class="form-group">
 
           <label for="servicioId">
-            ID del servicio
+            Tipo de servicio
           </label>
 
-          <input
+          <select
             id="servicioId"
-            type="number"
             name="servicioId"
             [(ngModel)]="newShipment.servicioId"
-            min="1"
             required
           >
+
+            <option
+              *ngFor="let service of catalogServices"
+              [value]="service.id"
+            >
+              {{ service.nombre || service.name }} - {{ service.tiempoEntrega || service.deliveryTime || 'Estándar' }} (Tarifa: ${{ service.tarifa || service.fare || 0 }})
+            </option>
+
+            <option
+              *ngIf="catalogServices.length === 0"
+              [value]="1"
+            >
+              Servicio Estándar #1
+            </option>
+
+          </select>
 
         </div>
 

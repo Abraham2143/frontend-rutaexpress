@@ -20,16 +20,16 @@ import {
   ShipmentStatus
 } from '../../service/shipments.service';
 
+import { CatalogService } from '../../service/catalog.service';
+
 
 @Component({
   selector: 'app-shipments',
-
   imports: [
     CommonModule,
     FormsModule,
     RouterLink
   ],
-
   templateUrl: './shipments.html',
   styleUrl: './shipments.css'
 })
@@ -40,6 +40,8 @@ export class Shipments implements OnInit {
   ===================================================== */
 
   shipments: ShipmentResponse[] = [];
+
+  catalogServices: any[] = [];
 
   searchTerm = '';
 
@@ -88,6 +90,9 @@ export class Shipments implements OnInit {
     private shipmentsService:
       ShipmentsService,
 
+    private catalogService:
+      CatalogService,
+
     private changeDetector:
       ChangeDetectorRef
 
@@ -101,6 +106,64 @@ export class Shipments implements OnInit {
   ngOnInit(): void {
 
     this.loadShipments();
+
+    this.loadCatalogServices();
+
+  }
+
+
+  /* =====================================================
+     CARGAR SERVICIOS DEL CATÁLOGO
+  ===================================================== */
+
+  loadCatalogServices(): void {
+
+    this.catalogService
+      .getServices()
+      .subscribe({
+
+        next: (services: any[]) => {
+
+          console.log(
+            'Servicios del catálogo recibidos:',
+            services
+          );
+
+
+          this.catalogServices = services || [];
+
+
+          if (
+            this.catalogServices.length > 0 &&
+            this.catalogServices[0].id
+          ) {
+
+            this.newShipment.servicioId =
+              this.catalogServices[0].id;
+
+          }
+
+
+          this.changeDetector
+            .detectChanges();
+
+        },
+
+
+        error: (error) => {
+
+          console.error(
+            'Error cargando servicios del catálogo:',
+            error
+          );
+
+
+          this.changeDetector
+            .detectChanges();
+
+        }
+
+      });
 
   }
 
@@ -140,6 +203,7 @@ export class Shipments implements OnInit {
 
           this.changeDetector
             .detectChanges();
+
         },
 
 
@@ -162,6 +226,7 @@ export class Shipments implements OnInit {
 
           this.changeDetector
             .detectChanges();
+
         }
 
       });
@@ -178,6 +243,7 @@ export class Shipments implements OnInit {
 
     return this.roleService
       .getRole();
+
   }
 
 
@@ -187,6 +253,7 @@ export class Shipments implements OnInit {
 
     this.roleService
       .setRole(role);
+
   }
 
 
@@ -198,6 +265,7 @@ export class Shipments implements OnInit {
     ) {
 
       return 'Administrador';
+
     }
 
 
@@ -207,10 +275,12 @@ export class Shipments implements OnInit {
     ) {
 
       return 'Despachador';
+
     }
 
 
     return 'Cliente';
+
   }
 
 
@@ -223,6 +293,7 @@ export class Shipments implements OnInit {
 
     return this.roleService
       .canCreateShipment();
+
   }
 
 
@@ -231,6 +302,7 @@ export class Shipments implements OnInit {
 
     return this.roleService
       .canChangeShipmentStatus();
+
   }
 
 
@@ -239,6 +311,7 @@ export class Shipments implements OnInit {
 
     return this.roleService
       .canAccessCatalog();
+
   }
 
 
@@ -256,6 +329,7 @@ export class Shipments implements OnInit {
           'CREADO'
       )
       .length;
+
   }
 
 
@@ -322,7 +396,9 @@ export class Shipments implements OnInit {
           );
 
         }
+
       );
+
   }
 
 
@@ -335,13 +411,16 @@ export class Shipments implements OnInit {
     if (
       !this.canCreateShipment
     ) {
+
       return;
+
     }
 
 
     this.errorMessage = '';
 
     this.showModal = true;
+
   }
 
 
@@ -350,11 +429,14 @@ export class Shipments implements OnInit {
     if (
       this.saving
     ) {
+
       return;
+
     }
 
 
     this.showModal = false;
+
   }
 
 
@@ -367,7 +449,9 @@ export class Shipments implements OnInit {
     if (
       !this.canCreateShipment
     ) {
+
       return;
+
     }
 
 
@@ -383,7 +467,9 @@ export class Shipments implements OnInit {
       this.errorMessage =
         'Debes completar todos los campos.';
 
+
       return;
+
     }
 
 
@@ -424,6 +510,7 @@ export class Shipments implements OnInit {
 
           this.changeDetector
             .detectChanges();
+
         },
 
 
@@ -449,6 +536,7 @@ export class Shipments implements OnInit {
 
           this.changeDetector
             .detectChanges();
+
         }
 
       });
@@ -462,6 +550,13 @@ export class Shipments implements OnInit {
 
   private resetForm(): void {
 
+    const defaultServicioId =
+      this.catalogServices.length > 0 &&
+      this.catalogServices[0].id
+        ? this.catalogServices[0].id
+        : 1;
+
+
     this.newShipment = {
 
       clienteId: '',
@@ -474,7 +569,8 @@ export class Shipments implements OnInit {
 
       direccionDestino: '',
 
-      servicioId: 1
+      servicioId: defaultServicioId
+
     };
 
   }
@@ -492,7 +588,9 @@ export class Shipments implements OnInit {
     if (
       !this.canChangeStatus
     ) {
+
       return;
+
     }
 
 
@@ -505,7 +603,9 @@ export class Shipments implements OnInit {
     if (
       !nextStatus
     ) {
+
       return;
+
     }
 
 
@@ -549,11 +649,13 @@ export class Shipments implements OnInit {
             this.shipments = [
               ...this.shipments
             ];
+
           }
 
 
           this.changeDetector
             .detectChanges();
+
         },
 
 
@@ -576,6 +678,7 @@ export class Shipments implements OnInit {
 
           this.changeDetector
             .detectChanges();
+
         }
 
       });
@@ -619,6 +722,7 @@ export class Shipments implements OnInit {
       default:
 
         return null;
+
     }
 
   }
@@ -665,6 +769,7 @@ export class Shipments implements OnInit {
       case 'CANCELADO':
 
         return 'Cancelado';
+
     }
 
   }
@@ -711,7 +816,31 @@ export class Shipments implements OnInit {
       case 'CANCELADO':
 
         return 'Cancelado';
+
     }
+
+  }
+
+
+  /* =====================================================
+     OBTENER NOMBRE DEL SERVICIO PARA LA TABLA
+  ===================================================== */
+
+  getServiceName(servicioId: number): string {
+
+    const found = this.catalogServices.find(
+      s => s.id === servicioId
+    );
+
+
+    if (found) {
+
+      return found.nombre || found.name || `Servicio #${servicioId}`;
+
+    }
+
+
+    return `Servicio #${servicioId}`;
 
   }
 
@@ -728,7 +857,9 @@ export class Shipments implements OnInit {
     if (
       !date
     ) {
+
       return '-';
+
     }
 
 
@@ -743,6 +874,7 @@ export class Shipments implements OnInit {
     ) {
 
       return date;
+
     }
 
 
@@ -750,6 +882,7 @@ export class Shipments implements OnInit {
       .toLocaleDateString(
         'es-CL'
       );
+
   }
 
 
@@ -768,6 +901,7 @@ export class Shipments implements OnInit {
     ) {
 
       return error.error;
+
     }
 
 
@@ -776,10 +910,12 @@ export class Shipments implements OnInit {
     ) {
 
       return error.error.message;
+
     }
 
 
     return fallback;
+
   }
 
 }
