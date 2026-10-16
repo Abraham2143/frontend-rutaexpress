@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
 
 @Component({
@@ -11,14 +11,31 @@ import { MsalService } from '@azure/msal-angular';
 })
 export class App implements OnInit {
 
-  constructor(private authService: MsalService) {}
+  constructor(
+    private authService: MsalService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
-    // Procesa el retorno de MSAL para desbloquear la pantalla tras autenticarse
     this.authService.handleRedirectObservable().subscribe({
       next: (result) => {
+        // 1. Establecer la cuenta activa tras la redirección
         if (result) {
           this.authService.instance.setActiveAccount(result.account);
+        } else {
+          const accounts = this.authService.instance.getAllAccounts();
+          if (accounts.length > 0) {
+            this.authService.instance.setActiveAccount(accounts[0]);
+          }
+        }
+
+        // 2. Si el usuario ya está autenticado y está en /login o en la raíz, enviarlo al dashboard
+        const activeAccount = this.authService.instance.getActiveAccount();
+        if (activeAccount) {
+          const currentPath = window.location.pathname;
+          if (currentPath === '/login' || currentPath === '/') {
+            this.router.navigate(['/dashboard']);
+          }
         }
       },
       error: (error) => console.error('Error al procesar redirect de MSAL:', error)
