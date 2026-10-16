@@ -9,7 +9,6 @@ import {
   MsalInterceptorConfiguration
 } from '@azure/msal-angular';
 
-
 const CLIENT_ID = 'af669402-d208-48a2-bed7-56d4a6f3371d';
 const TENANT_ID = '86277ca6-e8ef-4000-96b5-190477b8912d';
 const APP_ORIGIN = window.location.origin;
@@ -21,7 +20,7 @@ export const msalInstance = new PublicClientApplication({
   auth: {
     clientId: CLIENT_ID,
     authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    redirectUri: `${APP_ORIGIN}/login`,
+    redirectUri: APP_ORIGIN, // <--- Redirige a la raíz directamente
     postLogoutRedirectUri: `${APP_ORIGIN}/login`
   },
   cache: {
