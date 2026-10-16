@@ -20,7 +20,7 @@ export const msalInstance = new PublicClientApplication({
   auth: {
     clientId: CLIENT_ID,
     authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-    redirectUri: APP_ORIGIN, // <--- Redirige a la raíz directamente
+    redirectUri: `${APP_ORIGIN}/login`,
     postLogoutRedirectUri: `${APP_ORIGIN}/login`
   },
   cache: {
