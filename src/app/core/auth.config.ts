@@ -23,12 +23,6 @@ const TENANT_ID =
 
 /* =====================================================
    ORIGEN DEL FRONTEND
-
-   Local:
-   http://localhost:4200
-
-   Producción:
-   https://frontend-rutaexpress.vercel.app
 ===================================================== */
 
 const APP_ORIGIN =
