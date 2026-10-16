@@ -10,8 +10,6 @@ import { MsalService } from '@azure/msal-angular';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
-  authReady = false;
-
   constructor(
     private authService: MsalService,
     private router: Router
@@ -28,28 +26,33 @@ export class App implements OnInit {
             this.authService.instance.getAllAccounts()[0] ??
             null;
 
-          if (account) {
-            this.authService.instance.setActiveAccount(account);
+          const currentPath = this.router.url.split(/[?#]/, 1)[0];
 
-            const currentPath = this.router.url.split(/[?#]/, 1)[0];
-
-            if (
-              !currentPath ||
-              currentPath === '/' ||
-              currentPath === '/login'
-            ) {
-              void this.router.navigateByUrl('/dashboard').finally(() => {
-                this.authReady = true;
-              });
-              return;
+          if (!account) {
+            if (currentPath === '/auth/callback') {
+              void this.router.navigateByUrl('/login', { replaceUrl: true });
             }
+            return;
           }
 
-          this.authReady = true;
+          this.authService.instance.setActiveAccount(account);
+
+          if (
+            result?.account ||
+            currentPath === '/auth/callback' ||
+            currentPath === '/login' ||
+            currentPath === '/' ||
+            currentPath === ''
+          ) {
+            void this.router.navigateByUrl('/dashboard', { replaceUrl: true });
+          }
         },
         error: (error) => {
           console.error('Error al procesar el redirect de MSAL:', error);
-          this.authReady = true;
+
+          if (this.router.url.startsWith('/auth/callback')) {
+            void this.router.navigateByUrl('/login', { replaceUrl: true });
+          }
         }
       });
   }

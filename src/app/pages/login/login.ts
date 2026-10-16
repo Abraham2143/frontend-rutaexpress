@@ -15,6 +15,10 @@ export class Login {
     this.authService.loginRedirect({
       scopes: ['openid', 'profile', API_SCOPE],
       prompt: 'select_account'
+    }).subscribe({
+      error: (error) => {
+        console.error('Error al iniciar sesión:', error);
+      }
     });
   }
 }
