@@ -42,11 +42,7 @@ export class Login {
         ],
 
         prompt:
-          'select_account',
-
-        // Redirige directamente al dashboard al completar el inicio de sesión
-        redirectStartPage:
-          '/dashboard'
+          'select_account'
 
       });
 
