@@ -11,6 +11,6 @@ export const routes: Routes = [
   { path: 'shipments', component: Shipments, canActivate: [MsalGuard] },
   { path: 'catalog', component: Catalog, canActivate: [MsalGuard] },
   { path: 'catalogo', component: Catalog, canActivate: [MsalGuard] },
-  { path: '', component: Dashboard, canActivate: [MsalGuard] },
-  { path: '**', redirectTo: 'dashboard' }
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  { path: '**', redirectTo: 'login' }
 ];
