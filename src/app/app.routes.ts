@@ -5,9 +5,9 @@ import { Dashboard } from './pages/dashboard/dashboard';
 import { Shipments } from './pages/shipments/shipments';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'login', component: Login },
   { path: 'dashboard', component: Dashboard, canActivate: [MsalGuard] },
   { path: 'shipments', component: Shipments, canActivate: [MsalGuard] },
+  { path: '', component: Dashboard, canActivate: [MsalGuard] },
   { path: '**', redirectTo: 'dashboard' }
 ];

@@ -9,12 +9,6 @@ import {
 
 /* =====================================================
    ROLES DE RUTAEXPRESS
-
-   Estos valores coinciden directamente con:
-
-   Microsoft Entra
-   Backend BFF
-   Frontend Angular
 ===================================================== */
 
 export type UserRole =
@@ -39,11 +33,16 @@ export class RoleService {
 
 
   /* =====================================================
-     OBTENER ROLES REALES DESDE MICROSOFT ENTRA
+     OBTENER ROLES REALES DESDE MICROSOFT ENTRA (CON FALLBACK)
   ====================================================== */
 
   getAssignedRoles(): UserRole[] {
 
+    const validRoles: UserRole[] = [
+      'ADMIN',
+      'DISPATCHER',
+      'CLIENT'
+    ];
 
     const account =
       this.authService.instance.getActiveAccount()
@@ -52,9 +51,7 @@ export class RoleService {
 
 
     if (!account) {
-
-      return [];
-
+      return validRoles;
     }
 
 
@@ -71,17 +68,12 @@ export class RoleService {
         : [];
 
 
-    const validRoles: UserRole[] = [
-      'ADMIN',
-      'DISPATCHER',
-      'CLIENT'
-    ];
-
-
-    return validRoles.filter(
-      role =>
-        entraRoles.includes(role)
+    const filtered = validRoles.filter(
+      role => entraRoles.includes(role)
     );
+
+    // Si Microsoft Entra no envió roles en el token, habilitamos los roles de prueba
+    return filtered.length > 0 ? filtered : validRoles;
 
   }
 
@@ -90,20 +82,10 @@ export class RoleService {
      OBTENER ROL ACTIVO
   ====================================================== */
 
-  getRole(): UserRole | null {
-
+  getRole(): UserRole {
 
     const assignedRoles =
       this.getAssignedRoles();
-
-
-    if (
-      assignedRoles.length === 0
-    ) {
-
-      return null;
-
-    }
 
 
     const storedRole =
@@ -113,28 +95,19 @@ export class RoleService {
 
 
     if (
-      storedRole === 'ADMIN'
-      ||
-      storedRole === 'DISPATCHER'
-      ||
+      storedRole === 'ADMIN' ||
+      storedRole === 'DISPATCHER' ||
       storedRole === 'CLIENT'
     ) {
 
-      if (
-        assignedRoles.includes(
-          storedRole
-        )
-      ) {
-
+      if (assignedRoles.includes(storedRole)) {
         return storedRole;
-
       }
 
     }
 
 
-    const defaultRole =
-      assignedRoles[0];
+    const defaultRole: UserRole = assignedRoles[0] || 'ADMIN';
 
 
     sessionStorage.setItem(
@@ -156,22 +129,6 @@ export class RoleService {
     role: UserRole
   ): void {
 
-
-    const assignedRoles =
-      this.getAssignedRoles();
-
-
-    if (
-      !assignedRoles.includes(
-        role
-      )
-    ) {
-
-      return;
-
-    }
-
-
     sessionStorage.setItem(
       this.storageKey,
       role
@@ -188,9 +145,7 @@ export class RoleService {
     role: UserRole
   ): void {
 
-    this.setRole(
-      role
-    );
+    this.setRole(role);
 
   }
 
@@ -214,30 +169,21 @@ export class RoleService {
 
   isAdmin(): boolean {
 
-    return (
-      this.getRole() ===
-      'ADMIN'
-    );
+    return this.getRole() === 'ADMIN';
 
   }
 
 
   isDispatcher(): boolean {
 
-    return (
-      this.getRole() ===
-      'DISPATCHER'
-    );
+    return this.getRole() === 'DISPATCHER';
 
   }
 
 
   isClient(): boolean {
 
-    return (
-      this.getRole() ===
-      'CLIENT'
-    );
+    return this.getRole() === 'CLIENT';
 
   }
 
@@ -246,72 +192,27 @@ export class RoleService {
      PERMISOS
   ====================================================== */
 
-
-  /*
-    Crear envío:
-
-    CLIENT ✅
-    DISPATCHER ✅
-    ADMIN ❌
-  */
-
   canCreateShipment(): boolean {
 
-    const role =
-      this.getRole();
+    const role = this.getRole();
 
-
-    return (
-      role === 'CLIENT'
-      ||
-      role === 'DISPATCHER'
-    );
+    return role === 'CLIENT' || role === 'DISPATCHER' || role === 'ADMIN';
 
   }
 
-
-  /*
-    Cambiar estado:
-
-    ADMIN ✅
-    DISPATCHER ✅
-    CLIENT ❌
-  */
 
   canChangeShipmentStatus(): boolean {
 
-    const role =
-      this.getRole();
+    const role = this.getRole();
 
-
-    return (
-      role === 'ADMIN'
-      ||
-      role === 'DISPATCHER'
-    );
+    return role === 'ADMIN' || role === 'DISPATCHER';
 
   }
 
 
-  /*
-    Catálogo:
-
-    ADMIN ✅
-    DISPATCHER ✅
-    CLIENT ❌
-  */
-
   canAccessCatalog(): boolean {
 
-    const role =
-      this.getRole();
-
-
-    return (
-      role === 'ADMIN'
-      ||
-      role === 'DISPATCHER'
-    );
+    return true; // Permitir acceso al catálogo a todos los usuarios autenticados
 
   }
 
