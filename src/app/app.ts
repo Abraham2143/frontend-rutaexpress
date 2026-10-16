@@ -6,15 +6,15 @@ import { MsalService } from '@azure/msal-angular';
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css'
+  templateUrl: './app.html',
+  styleUrl: './app.css'
 })
-export class AppComponent implements OnInit {
+export class App implements OnInit {
 
   constructor(private authService: MsalService) {}
 
   ngOnInit(): void {
-    // Procesa el retorno desde Azure AD para desbloquear la interfaz
+    // Procesa el retorno de MSAL para desbloquear la pantalla tras autenticarse
     this.authService.handleRedirectObservable().subscribe({
       next: (result) => {
         if (result) {
@@ -26,3 +26,5 @@ export class AppComponent implements OnInit {
   }
 
 }
+
+export { App as AppComponent };
