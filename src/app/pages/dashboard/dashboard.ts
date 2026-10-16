@@ -214,22 +214,27 @@ export class Dashboard implements OnInit {
   ========================== */
 
   logout(): void {
+    // 1. Limpiar el almacenamiento local y de sesión
+    sessionStorage.clear();
+    localStorage.clear();
 
-    /*
-      Eliminamos el rol activo guardado.
+    // 2. Obtener la cuenta activa de MSAL
+    const activeAccount = 
+      this.authService.instance.getActiveAccount() || 
+      this.authService.instance.getAllAccounts()[0];
 
-      Así, si después inicia sesión
-      otra persona, no hereda la vista
-      del usuario anterior.
-    */
-    this.roleService.clearActiveRole();
+    const targetLogoutUri = `${window.location.origin}/login`;
 
-
-    this.authService.logoutRedirect({
-      postLogoutRedirectUri:
-        'http://localhost:4200/login'
-    });
-
+    if (activeAccount) {
+      // Si hay cuenta activa, cerrar sesión en Entra ID y volver a /login
+      this.authService.logoutRedirect({
+        account: activeAccount,
+        postLogoutRedirectUri: targetLogoutUri
+      });
+    } else {
+      // Si no hay cuenta activa en memoria de MSAL, redirigir directamente
+      window.location.href = targetLogoutUri;
+    }
   }
 
 }

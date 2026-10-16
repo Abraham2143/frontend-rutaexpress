@@ -8,6 +8,8 @@ export const routes: Routes = [
   { path: 'login', component: Login },
   { path: 'dashboard', component: Dashboard, canActivate: [MsalGuard] },
   { path: 'shipments', component: Shipments, canActivate: [MsalGuard] },
+  { path: 'catalog', component: Shipments, canActivate: [MsalGuard] },
+  { path: 'catalogo', component: Shipments, canActivate: [MsalGuard] },
   { path: '', component: Dashboard, canActivate: [MsalGuard] },
   { path: '**', redirectTo: 'dashboard' }
 ];
