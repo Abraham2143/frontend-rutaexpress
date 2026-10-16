@@ -1,5 +1,4 @@
-import { Component, OnInit } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component } from '@angular/core';
 import { MsalService } from '@azure/msal-angular';
 import { API_SCOPE } from '../../core/auth.config';
 
@@ -9,22 +8,8 @@ import { API_SCOPE } from '../../core/auth.config';
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
-export class Login implements OnInit {
-
-  constructor(
-    private authService: MsalService,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    const activeAccount = 
-      this.authService.instance.getActiveAccount() || 
-      this.authService.instance.getAllAccounts()[0];
-
-    if (activeAccount) {
-      this.router.navigate(['/dashboard']);
-    }
-  }
+export class Login {
+  constructor(private authService: MsalService) {}
 
   login(): void {
     this.authService.loginRedirect({
@@ -32,5 +17,4 @@ export class Login implements OnInit {
       prompt: 'select_account'
     });
   }
-
 }
