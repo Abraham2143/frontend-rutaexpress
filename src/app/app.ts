@@ -10,6 +10,7 @@ import { MsalService } from '@azure/msal-angular';
   styleUrl: './app.css'
 })
 export class App implements OnInit {
+  authReady = false;
 
   constructor(
     private authService: MsalService,
@@ -17,30 +18,41 @@ export class App implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.authService.handleRedirectObservable().subscribe({
-      next: (result) => {
-        // 1. Si la redirección viene de Microsoft con el token listo
-        if (result && result.account) {
-          this.authService.instance.setActiveAccount(result.account);
-          this.router.navigate(['/dashboard']);
-          return;
-        }
+    this.authService
+      .handleRedirectObservable({ navigateToLoginRequestUrl: false })
+      .subscribe({
+        next: (result) => {
+          const account =
+            result?.account ??
+            this.authService.instance.getActiveAccount() ??
+            this.authService.instance.getAllAccounts()[0] ??
+            null;
 
-        // 2. Si ya existía una sesión guardada previamente
-        const accounts = this.authService.instance.getAllAccounts();
-        if (accounts.length > 0) {
-          this.authService.instance.setActiveAccount(accounts[0]);
-          if (window.location.pathname === '/login' || window.location.pathname === '/') {
-            this.router.navigate(['/dashboard']);
+          if (account) {
+            this.authService.instance.setActiveAccount(account);
+
+            const currentPath = this.router.url.split(/[?#]/, 1)[0];
+
+            if (
+              !currentPath ||
+              currentPath === '/' ||
+              currentPath === '/login'
+            ) {
+              void this.router.navigateByUrl('/dashboard').finally(() => {
+                this.authReady = true;
+              });
+              return;
+            }
           }
-        }
-      },
-      error: (error) => {
-        console.error('Error al procesar el redirect de MSAL:', error);
-      }
-    });
-  }
 
+          this.authReady = true;
+        },
+        error: (error) => {
+          console.error('Error al procesar el redirect de MSAL:', error);
+          this.authReady = true;
+        }
+      });
+  }
 }
 
 export { App as AppComponent };
