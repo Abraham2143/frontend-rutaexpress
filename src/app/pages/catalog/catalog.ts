@@ -30,158 +30,78 @@ import {
 
 @Component({
   selector: 'app-catalog',
-
   standalone: true,
-
   imports: [
     CommonModule,
     RouterLink
   ],
-
-  templateUrl:
-    './catalog.html',
-
-  styleUrl:
-    './catalog.css'
+  templateUrl: './catalog.html',
+  styleUrl: './catalog.css'
 })
-export class Catalog
-  implements OnInit {
-
+export class Catalog implements OnInit {
 
   /* =====================================================
      DATOS
-  ====================================================== */
+  ===================================================== */
 
-  services:
-    CatalogServiceItem[] = [];
+  services: CatalogServiceItem[] = [];
 
+  loading = false;
 
-  loading =
-    false;
-
-
-  errorMessage =
-    '';
+  errorMessage = '';
 
 
   constructor(
-
-    private router:
-      Router,
-
-    private authService:
-      MsalService,
-
-    public roleService:
-      RoleService,
-
-    private catalogService:
-      CatalogService,
-
-    private changeDetector:
-      ChangeDetectorRef
-
+    private router: Router,
+    private authService: MsalService,
+    public roleService: RoleService,
+    private catalogService: CatalogService,
+    private changeDetector: ChangeDetectorRef
   ) {}
 
 
   /* =====================================================
      INICIO
-  ====================================================== */
+  ===================================================== */
 
   ngOnInit(): void {
-
-
-    if (
-      !this.roleService
-        .canAccessCatalog()
-    ) {
-
-      this.router.navigate([
-        '/dashboard'
-      ]);
-
-      return;
-
-    }
-
-
+    // Carga directa del catálogo sin expulsiones por inicialización asíncrona de rol
     this.loadCatalog();
-
   }
 
 
   /* =====================================================
      CARGAR CATÁLOGO
-  ====================================================== */
+  ===================================================== */
 
   loadCatalog(): void {
 
-
-    this.loading =
-      true;
-
-
-    this.errorMessage =
-      '';
-
+    this.loading = true;
+    this.errorMessage = '';
 
     this.catalogService
       .getServices()
       .subscribe({
 
-        next: (
-          services:
-            CatalogServiceItem[]
-        ) => {
+        next: (services: CatalogServiceItem[]) => {
 
+          console.log('Servicios listos para Angular:', services);
 
-          console.log(
-            'Servicios listos para Angular:',
-            services
-          );
+          this.services = [...services];
+          this.loading = false;
 
-
-          this.services =
-            [...services];
-
-
-          this.loading =
-            false;
-
-
-          /*
-            Fuerza a Angular a refrescar
-            inmediatamente la pantalla
-            después de recibir el backend.
-          */
-          this.changeDetector
-            .detectChanges();
+          this.changeDetector.detectChanges();
 
         },
 
+        error: (error: unknown) => {
 
-        error: (
-          error:
-            unknown
-        ) => {
+          console.error('Error cargando catálogo:', error);
 
+          this.errorMessage = 'No fue posible cargar el catálogo.';
+          this.loading = false;
 
-          console.error(
-            'Error cargando catálogo:',
-            error
-          );
-
-
-          this.errorMessage =
-            'No fue posible cargar el catálogo.';
-
-
-          this.loading =
-            false;
-
-
-          this.changeDetector
-            .detectChanges();
+          this.changeDetector.detectChanges();
 
         }
 
@@ -192,146 +112,116 @@ export class Catalog
 
   /* =====================================================
      ROLES
-  ====================================================== */
+  ===================================================== */
 
-  get currentRole():
-    UserRole | null {
+  get currentRole(): UserRole | null {
 
-    return this.roleService
-      .getRole();
+    return this.roleService.getRole();
 
   }
 
 
-  get isAdmin():
-    boolean {
+  get isAdmin(): boolean {
 
-    return this.roleService
-      .isAdmin();
+    return this.roleService.isAdmin();
 
   }
 
 
-  get isDispatcher():
-    boolean {
+  get isDispatcher(): boolean {
 
-    return this.roleService
-      .isDispatcher();
+    return this.roleService.isDispatcher();
 
   }
 
 
-  get roleName():
-    string {
+  get roleName(): string {
 
-
-    if (
-      this.currentRole ===
-      'ADMIN'
-    ) {
+    if (this.currentRole === 'ADMIN') {
 
       return 'Administrador';
 
     }
 
-
-    if (
-      this.currentRole ===
-      'DISPATCHER'
-    ) {
+    if (this.currentRole === 'DISPATCHER') {
 
       return 'Despachador';
 
     }
 
-
-    return 'Sin acceso';
+    return 'Cliente';
 
   }
 
 
   /* =====================================================
      ESTADÍSTICAS
-  ====================================================== */
+  ===================================================== */
 
-  get activeServices():
-    number {
+  get activeServices(): number {
 
-    return this.services
-      .filter(
-        service =>
-          service.status ===
-          'Activo'
-      )
-      .length;
+    return this.services.filter(
+      service => service.status === 'Activo' || service.activo
+    ).length;
 
   }
 
 
-  get totalCapacity():
-    number {
+  get totalCapacity(): number {
 
-    return this.services
-      .reduce(
-
-        (
-          total,
-          service
-        ) =>
-          total
-          +
-          service.capacity,
-
-        0
-
-      );
+    return this.services.reduce(
+      (total, service) => total + (service.capacity || service.capacidadDisponible || 0),
+      0
+    );
 
   }
 
 
-  get minimumPrice():
-    number {
+  get minimumPrice(): number {
 
-
-    if (
-      this.services.length === 0
-    ) {
+    if (this.services.length === 0) {
 
       return 0;
 
     }
 
-
     return Math.min(
-
       ...this.services.map(
-        service =>
-          service.price
+        service => service.price || service.tarifa || 0
       )
-
     );
 
   }
 
 
   /* =====================================================
-     CERRAR SESIÓN
-  ====================================================== */
+     CERRAR SESIÓN (DINÁMICO PARA LOCAL Y VERCEL)
+  ===================================================== */
 
   logout(): void {
 
+    this.roleService.clearActiveRole();
+    sessionStorage.clear();
+    localStorage.clear();
 
-    this.roleService
-      .clearActiveRole();
+    const activeAccount =
+      this.authService.instance.getActiveAccount() ||
+      this.authService.instance.getAllAccounts()[0];
 
+    const targetLogoutUri = `${window.location.origin}/login`;
 
-    this.authService
-      .logoutRedirect({
+    if (activeAccount) {
 
-        postLogoutRedirectUri:
-          'http://localhost:4200/login'
-
+      this.authService.logoutRedirect({
+        account: activeAccount,
+        postLogoutRedirectUri: targetLogoutUri
       });
+
+    } else {
+
+      window.location.href = targetLogoutUri;
+
+    }
 
   }
 
