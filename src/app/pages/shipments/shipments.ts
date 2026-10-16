@@ -118,6 +118,12 @@ export class Shipments implements OnInit {
 
   loadCatalogServices(): void {
 
+    const fallbackServices = [
+      { id: 1, nombre: 'Envío Express 24h', name: 'Envío Express 24h', tiempoEntrega: '24 horas', deliveryTime: '24 horas', tarifa: 4990, fare: 4990 },
+      { id: 2, nombre: 'Envío Estándar Nacional', name: 'Envío Estándar Nacional', tiempoEntrega: '48 a 72 horas', deliveryTime: '48 a 72 horas', tarifa: 2990, fare: 2990 },
+      { id: 3, nombre: 'Envío Prioritario Bodega', name: 'Envío Prioritario Bodega', tiempoEntrega: '12 horas', deliveryTime: '12 horas', tarifa: 7990, fare: 7990 }
+    ];
+
     this.catalogService
       .getServices()
       .subscribe({
@@ -130,7 +136,15 @@ export class Shipments implements OnInit {
           );
 
 
-          this.catalogServices = services || [];
+          if (services && services.length > 0) {
+
+            this.catalogServices = services;
+
+          } else {
+
+            this.catalogServices = fallbackServices;
+
+          }
 
 
           if (
@@ -153,9 +167,14 @@ export class Shipments implements OnInit {
         error: (error) => {
 
           console.error(
-            'Error cargando servicios del catálogo:',
+            'Error cargando servicios del catálogo, usando fallback:',
             error
           );
+
+
+          this.catalogServices = fallbackServices;
+
+          this.newShipment.servicioId = fallbackServices[0].id;
 
 
           this.changeDetector
