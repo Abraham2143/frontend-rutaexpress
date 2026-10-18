@@ -1,6 +1,24 @@
 # RutaExpress - Frontend
 
-Frontend web de **RutaExpress**, desarrollado con Angular e integrado con **Microsoft Entra ID mediante MSAL** para autenticación y control de acceso por roles.
+Frontend web de **RutaExpress**, desarrollado con Angular e integrado con **Microsoft Entra ID mediante MSAL** para autenticación y control de acceso por roles. Desplegado en **AWS Amplify** con integración CI/CD automática.
+
+---
+
+## Matriz de Funcionalidades 
+
+A continuación se presenta el alcance completo del proyecto, su estado de implementación, componente responsable y evidencia verificable para la evaluación:
+
+| N° | Funcionalidad | Estado | Componente Responsable | Evidencia Verificable / Endpoint |
+| :---: | :--- | :---: | :--- | :--- |
+| **1** | Despliegue Cloud Frontend y Pipeline CI/CD | **Implementada** | AWS Amplify (Angular) | Aplicación activa en la nube con despliegue automático desde GitHub. |
+| **2** | Autenticación OIDC / OAuth2 e IDaaS | **Implementada** | Microsoft Entra ID / Angular MSAL | Login, `MsalGuard`, consumo de claims y obtención de tokens JWT válidos. |
+| **3** | Enrutamiento API Gateway y Seguridad CORS | **Implementada** | BFF (`ms-rutaexpress-bff`) | Validación de JWT, control de CORS y enrutamiento a microservicios. |
+| **4** | Consulta de Catálogo de Servicios | **Implementada** | `ms-rutaexpress-catalog` | Endpoint `GET /api/v1/catalog` con integración a Oracle Autonomous DB. |
+| **5** | Creación y Consulta de Envíos | **Implementada** | `ms-rutaexpress-shipments` | Endpoints REST `GET /POST /api/v1/shipments` con persistencia mediante Wallet TLS. |
+| **6** | Transacción y Cambio de Estado (Síncrono) | **Implementada** | Frontend / `ms-rutaexpress-shipments` | Botón "Aceptar", llamado `PUT /api/v1/shipments/{id}/status` y actualización en Oracle. |
+| **7** | Publicación Asíncrona de Eventos | **Implementada** | `ms-rutaexpress-shipments` / RabbitMQ | Disparo de `ShipmentNotification` a `shipments.exchange` -> `shipments.queue` (`Ready: 1`). |
+| **8** | API REST de Administración de Colas | **Implementada** | `ms-rutaexpress-admin` | Endpoints `POST /queues`, `DELETE /queues/{name}`, DTOs con `@NotBlank` y `@Valid`. |
+| **9** | Topología de Tolerancia a Fallos y DLQ | **Implementada** | Clúster RabbitMQ / Spring AMQP | Colas `q.cmd.*` configuradas con directivas **DLX**, **DLK** y colas de descarte (`*.dlq`). |
 
 ---
 
@@ -11,17 +29,18 @@ Frontend web de **RutaExpress**, desarrollado con Angular e integrado con **Micr
 - HTML / CSS
 - MSAL Angular
 - Microsoft Entra ID
+- AWS Amplify
 - Git / GitHub
 
 ---
 
-## Funcionalidades
+## Funcionalidades de la Interfaz
 
 - Inicio y cierre de sesión con Microsoft.
 - Protección de rutas mediante `MsalGuard`.
 - Obtención de roles desde Microsoft Entra ID.
 - Dashboard adaptado según el rol del usuario.
-- Gestión de envíos.
+- Gestión y actualización de estado de envíos.
 - Consulta del catálogo de servicios.
 - Control de acciones según permisos.
 
@@ -35,7 +54,7 @@ Los roles son obtenidos desde los claims entregados por Microsoft Entra ID.
 
 ---
 
-## Rutas principales
+## Rutas Principales
 
 | Ruta | Acceso |
 |---|---|
@@ -54,106 +73,9 @@ Antes de ejecutar el proyecto debes tener instalado:
 - npm
 - Git
 
-npm se instala junto con Node.js.
-
 Puedes comprobar las instalaciones con:
 
 ```bash
 node --version
 npm --version
 git --version
-```
-
-No es necesario instalar Angular CLI de forma global.
-
----
-
-## Ejecutar el proyecto
-
-### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/Abraham2143/frontend-rutaexpress.git
-```
-
-### 2. Entrar al proyecto
-
-```bash
-cd frontend-rutaexpress
-```
-
-### 3. Instalar dependencias
-
-```bash
-npm install
-```
-
-Este comando instalará automáticamente las dependencias definidas en el proyecto, incluyendo Angular y MSAL.
-
-### 4. Levantar el frontend
-
-```bash
-npm start
-```
-
-Luego abrir en el navegador:
-
-```text
-http://localhost:4200
-```
-
-Para detener el servidor utiliza:
-
-```text
-Ctrl + C
-```
-
----
-
-## Compilar el proyecto
-
-Para comprobar que el frontend compile correctamente:
-
-```bash
-npm run build
-```
-
-Los archivos generados se almacenarán en la carpeta `dist/`.
-
----
-
-## Autenticación y roles
-
-RutaExpress utiliza **Microsoft Entra ID** para autenticar a los usuarios.
-
-Los roles configurados son:
-
-| Rol | Permisos principales |
-|---|---|
-| `ADMIN` | Visualizar KPIs, consultar envíos, cambiar estados y acceder al catálogo |
-| `DISPATCHER` | Crear envíos, gestionar estados y acceder al catálogo |
-| `CLIENT` | Crear y consultar sus envíos |
-
-Las rutas privadas requieren autenticación mediante Microsoft y los permisos de la interfaz dependen de los roles asignados al usuario.
-
-> Para iniciar sesión correctamente, la cuenta debe tener acceso a la aplicación configurada en Microsoft Entra ID.
-
----
-
-## Flujo de ramas
-
-El desarrollo se realiza sobre la rama:
-
-```text
-development
-```
-
-Los cambios terminados se integran mediante Pull Request:
-
-```text
-development
-    ↓
-Pull Request
-    ↓
-main
-```
