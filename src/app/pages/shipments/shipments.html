@@ -1,98 +1,35 @@
 <div class="page">
-
-  <!-- =====================================================
-        SIDEBAR
-  ====================================================== -->
-
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-
     <div class="brand">
-
-      <div class="brand-icon">
-        R
-      </div>
-
-      <span>
-        RutaExpress
-      </span>
-
+      <div class="brand-icon">R</div>
+      <span>RutaExpress</span>
     </div>
 
-
     <nav class="menu">
-
-      <p class="menu-title">
-        MENÚ
-      </p>
-
-
-      <a
-        class="menu-item"
-        routerLink="/dashboard"
-      >
-        <span class="menu-icon">
-          ⌂
-        </span>
-
-        <span>
-          Inicio
-        </span>
+      <p class="menu-title">MENÚ</p>
+      <a class="menu-item" routerLink="/dashboard">
+        <span class="menu-icon">⌂</span>
+        <span>Inicio</span>
       </a>
-
-
-      <a
-        class="menu-item active"
-        routerLink="/shipments"
-      >
-        <span class="menu-icon">
-          ▣
-        </span>
-
-        <span>
-          Envíos
-        </span>
+      <a class="menu-item active" routerLink="/shipments">
+        <span class="menu-icon">▣</span>
+        <span>Envíos</span>
       </a>
-
-
-      <a
-        *ngIf="canAccessCatalog"
-        class="menu-item"
-        routerLink="/catalog"
-      >
-        <span class="menu-icon">
-          ◇
-        </span>
-
-        <span>
-          Catálogo
-        </span>
+      <a *ngIf="canAccessCatalog" class="menu-item" routerLink="/catalog">
+        <span class="menu-icon">◇</span>
+        <span>Catálogo</span>
       </a>
-
     </nav>
-
   </aside>
 
-
-  <!-- =====================================================
-        CONTENIDO
-  ====================================================== -->
-
+  <!-- CONTENIDO -->
   <main class="content">
-
     <header class="header">
-
       <div>
-
-        <p>
-          RutaExpress / Envíos
-        </p>
-
-        <h1>
-          Gestión de envíos
-        </h1>
-
+        <p>RutaExpress / Envíos</p>
+        <h1>Gestión de envíos</h1>
       </div>
-
 
       <button
         *ngIf="canCreateShipment"
@@ -102,382 +39,134 @@
       >
         ＋ Nuevo envío
       </button>
-
     </header>
 
-
     <section class="body">
-
       <div class="intro">
-
-        <h2>
-          Envíos
-        </h2>
-
-        <p>
-          Consulta y administra los envíos
-          registrados en RutaExpress.
-        </p>
-
+        <h2>Envíos</h2>
+        <p>Consulta y administra los envíos registrados en RutaExpress.</p>
       </div>
-
 
       <!-- RESUMEN -->
-
       <div class="summary">
-
         <div class="summary-card">
-
-          <span>
-            Total de envíos
-          </span>
-
-          <strong>
-            {{ shipments.length }}
-          </strong>
-
+          <span>Total de envíos</span>
+          <strong>{{ shipments.length }}</strong>
         </div>
-
-
         <div class="summary-card">
-
-          <span>
-            Pendientes
-          </span>
-
-          <strong>
-            {{ pendingCount }}
-          </strong>
-
+          <span>Pendientes</span>
+          <strong>{{ pendingCount }}</strong>
         </div>
-
         <div class="summary-card">
-
-          <span>
-            Servicios catálogo
-          </span>
-
-          <strong>
-            {{ catalogServices.length }}
-          </strong>
-
+          <span>Servicios catálogo</span>
+          <strong>{{ catalogServices.length }}</strong>
         </div>
-
       </div>
-
 
       <!-- CARGANDO -->
-
-      <div
-        class="form-info"
-        *ngIf="loading"
-      >
-
-        <span>
-          i
-        </span>
-
-        <p>
-          Cargando envíos...
-        </p>
-
+      <div class="form-info" *ngIf="loading">
+        <span>i</span>
+        <p>Cargando envíos...</p>
       </div>
 
-
-      <!-- ERROR -->
-
-      <div
-        class="form-info"
-        *ngIf="
-          errorMessage &&
-          !showModal
-        "
-      >
-
-        <span>
-          !
-        </span>
-
-        <p>
-          {{ errorMessage }}
-        </p>
-
+      <!-- ERROR GLOBAL -->
+      <div class="form-info" *ngIf="errorMessage && !showModal && !showStatusModal">
+        <span>!</span>
+        <p>{{ errorMessage }}</p>
       </div>
-
 
       <!-- FILTROS -->
-
       <section class="filters">
-
         <div class="search">
-
-          <span>
-            ⌕
-          </span>
-
+          <span>⌕</span>
           <input
             type="text"
             [(ngModel)]="searchTerm"
             placeholder="Buscar por tracking, destinatario, cliente o destino..."
           >
-
         </div>
 
-
-        <select
-          [(ngModel)]="statusFilter"
-        >
-
-          <option value="Todos">
-            Todos los estados
-          </option>
-
-          <option value="CREADO">
-            Pendiente
-          </option>
-
-          <option value="ACEPTADO">
-            Aceptado
-          </option>
-
-          <option value="EN_BODEGA">
-            En bodega
-          </option>
-
-          <option value="EN_RUTA">
-            En tránsito
-          </option>
-
-          <option value="ENTREGADO">
-            Entregado
-          </option>
-
-          <option value="CANCELADO">
-            Cancelado
-          </option>
-
+        <select [(ngModel)]="statusFilter">
+          <option value="Todos">Todos los estados</option>
+          <option value="CREADO">Pendiente</option>
+          <option value="ACEPTADO">Aceptado</option>
+          <option value="EN_BODEGA">En bodega</option>
+          <option value="EN_RUTA">En tránsito</option>
+          <option value="ENTREGADO">Entregado</option>
+          <option value="CANCELADO">Cancelado</option>
         </select>
-
       </section>
 
-
       <!-- TABLA -->
-
       <section class="table-card">
-
         <table>
-
           <thead>
-
             <tr>
-
-              <th>
-                ID
-              </th>
-
-              <th>
-                DESTINATARIO
-              </th>
-
-              <th>
-                DESTINO
-              </th>
-
-              <th>
-                SERVICIO
-              </th>
-
-              <th>
-                FECHA
-              </th>
-
-              <th>
-                ESTADO
-              </th>
-
-              <th
-                *ngIf="canChangeStatus"
-              >
-                ACCIÓN
-              </th>
-
+              <th>ID</th>
+              <th>DESTINATARIO</th>
+              <th>DESTINO</th>
+              <th>SERVICIO</th>
+              <th>FECHA</th>
+              <th>ESTADO</th>
+              <th *ngIf="canChangeStatus">ACCIÓN</th>
             </tr>
-
           </thead>
-
-
           <tbody>
-
-            <tr
-              *ngFor="
-                let shipment
-                of filteredShipments
-              "
-            >
-
-              <td class="id">
-                #{{ shipment.trackingNumber }}
-              </td>
-
-
+            <tr *ngFor="let shipment of filteredShipments">
+              <td class="id">#{{ shipment.trackingNumber }}</td>
               <td>
-
-                <strong>
-                  {{ shipment.destinatarioNombre }}
-                </strong>
-
-                <small>
-                  {{ shipment.destinatarioEmail }}
-                </small>
-
+                <strong>{{ shipment.destinatarioNombre }}</strong>
+                <small>{{ shipment.destinatarioEmail }}</small>
               </td>
-
-
               <td>
-
                 {{ shipment.direccionDestino }}
-
-                <small>
-                  Desde:
-                  {{ shipment.direccionOrigen }}
-                </small>
-
+                <small>Desde: {{ shipment.direccionOrigen }}</small>
               </td>
-
-
-              <!-- MUESTRA EL NOMBRE REAL DEL SERVICIO DEL CATÁLOGO -->
+              <td>{{ getServiceName(shipment.servicioId) }}</td>
+              <td>{{ formatDate(shipment.fechaCreacion) }}</td>
               <td>
-                {{ getServiceName(shipment.servicioId) }}
-              </td>
-
-
-              <td>
-                {{ formatDate(shipment.fechaCreacion) }}
-              </td>
-
-
-              <td>
-
                 <span
                   class="status"
-
-                  [class.pending]="
-                    shipment.status === 'CREADO' ||
-                    shipment.status === 'ACEPTADO'
-                  "
-
-                  [class.transit]="
-                    shipment.status === 'EN_BODEGA' ||
-                    shipment.status === 'EN_RUTA'
-                  "
-
-                  [class.delivered]="
-                    shipment.status === 'ENTREGADO'
-                  "
+                  [class.pending]="shipment.status === 'CREADO' || shipment.status === 'ACEPTADO'"
+                  [class.transit]="shipment.status === 'EN_BODEGA' || shipment.status === 'EN_RUTA'"
+                  [class.delivered]="shipment.status === 'ENTREGADO'"
                 >
-
                   {{ getStatusLabel(shipment.status) }}
-
                 </span>
-
               </td>
-
-
-              <td
-                *ngIf="canChangeStatus"
-              >
-
+              <td *ngIf="canChangeStatus">
                 <button
                   class="action-button"
                   type="button"
-
-                  [disabled]="
-                    getNextStatus(
-                      shipment.status
-                    ) === null
-                  "
-
-                  (click)="
-                    changeStatus(
-                      shipment
-                    )
-                  "
+                  [disabled]="getNextStatus(shipment.status) === null"
+                  (click)="openStatusModal(shipment)"
                 >
-
-                  {{
-                    getActionLabel(
-                      shipment.status
-                    )
-                  }}
-
+                  {{ getActionLabel(shipment.status) }}
                 </button>
-
               </td>
-
             </tr>
-
           </tbody>
-
         </table>
 
-
-        <div
-          class="empty"
-          *ngIf="
-            !loading &&
-            filteredShipments.length === 0
-          "
-        >
-
+        <div class="empty" *ngIf="!loading && filteredShipments.length === 0">
           No se encontraron envíos.
-
         </div>
-
       </section>
-
     </section>
-
   </main>
 
-
-  <!-- =====================================================
-        MODAL NUEVO ENVÍO
-  ====================================================== -->
-
+  <!-- MODAL NUEVO ENVÍO -->
   <div
     class="modal-background"
-
-    *ngIf="
-      showModal &&
-      canCreateShipment
-    "
-
+    *ngIf="showModal && canCreateShipment"
     (click)="closeModal()"
   >
-
-    <div
-      class="modal"
-
-      (click)="
-        $event.stopPropagation()
-      "
-    >
-
+    <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
-
         <div>
-
-          <h2>
-            Nuevo envío
-          </h2>
-
-          <p>
-            Registra un nuevo envío
-            en RutaExpress.
-          </p>
-
+          <h2>Nuevo envío</h2>
+          <p>Registra un nuevo envío en RutaExpress.</p>
         </div>
-
 
         <button
           class="close"
@@ -487,39 +176,24 @@
         >
           ×
         </button>
-
       </div>
 
-
-      <form
-        (ngSubmit)="createShipment()"
-      >
-
+      <form (ngSubmit)="createShipment()">
         <div class="form-group">
-
-          <label for="clienteId">
-            Cliente
-          </label>
-
+          <label for="clienteId">Cliente (RUT / Identificador)</label>
           <input
             id="clienteId"
             type="text"
             name="clienteId"
             [(ngModel)]="newShipment.clienteId"
-            placeholder="Ej: cliente-001"
+            placeholder="Ej: 12345678-9"
             maxlength="100"
             required
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label for="destinatarioNombre">
-            Destinatario
-          </label>
-
+          <label for="destinatarioNombre">Destinatario</label>
           <input
             id="destinatarioNombre"
             type="text"
@@ -529,16 +203,10 @@
             maxlength="150"
             required
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label for="destinatarioEmail">
-            Correo del destinatario
-          </label>
-
+          <label for="destinatarioEmail">Correo del destinatario</label>
           <input
             id="destinatarioEmail"
             type="email"
@@ -548,16 +216,10 @@
             maxlength="254"
             required
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label for="direccionOrigen">
-            Dirección de origen
-          </label>
-
+          <label for="direccionOrigen">Dirección de origen</label>
           <input
             id="direccionOrigen"
             type="text"
@@ -567,16 +229,10 @@
             maxlength="300"
             required
           >
-
         </div>
 
-
         <div class="form-group">
-
-          <label for="direccionDestino">
-            Dirección de destino
-          </label>
-
+          <label for="direccionDestino">Dirección de destino</label>
           <input
             id="direccionDestino"
             type="text"
@@ -586,75 +242,39 @@
             maxlength="300"
             required
           >
-
         </div>
 
-
-        <!-- SELECTOR DESPLEGABLE DINÁMICO DEL CATÁLOGO -->
         <div class="form-group">
-
-          <label for="servicioId">
-            Tipo de servicio
-          </label>
-
+          <label for="servicioId">Tipo de servicio</label>
           <select
             id="servicioId"
             name="servicioId"
             [(ngModel)]="newShipment.servicioId"
             required
           >
-
             <option
               *ngFor="let service of catalogServices"
               [value]="service.id"
             >
               {{ service.nombre || service.name }} - {{ service.tiempoEntrega || service.deliveryTime || 'Estándar' }} (Tarifa: ${{ service.tarifa || service.fare || 0 }})
             </option>
-
-            <option
-              *ngIf="catalogServices.length === 0"
-              [value]="1"
-            >
+            <option *ngIf="catalogServices.length === 0" [value]="1">
               Servicio Estándar #1
             </option>
-
           </select>
-
         </div>
-
 
         <div class="form-info">
-
-          <span>
-            i
-          </span>
-
-          <p>
-            El envío será registrado inicialmente con estado
-            <strong>Pendiente</strong>.
-          </p>
-
+          <span>i</span>
+          <p>El envío será registrado inicialmente con estado <strong>Pendiente</strong>.</p>
         </div>
 
-
-        <div
-          class="form-info"
-          *ngIf="errorMessage"
-        >
-
-          <span>
-            !
-          </span>
-
-          <p>
-            {{ errorMessage }}
-          </p>
-
+        <div class="form-info" *ngIf="errorMessage">
+          <span>!</span>
+          <p>{{ errorMessage }}</p>
         </div>
-
 
         <div class="modal-actions">
-
           <button
             type="button"
             class="cancel-button"
@@ -664,27 +284,88 @@
             Cancelar
           </button>
 
+          <button
+            type="submit"
+            class="save-button"
+            [disabled]="saving"
+          >
+            {{ saving ? 'Registrando...' : 'Registrar envío' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CAMBIO DE ESTADO Y OBSERVACIÓN DE CHOFER -->
+  <div
+    class="modal-background"
+    *ngIf="showStatusModal"
+    (click)="closeStatusModal()"
+  >
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2>Actualizar Estado</h2>
+          <p>Envío #{{ selectedShipmentForStatus?.trackingNumber }}</p>
+        </div>
+
+        <button
+          class="close"
+          type="button"
+          [disabled]="saving"
+          (click)="closeStatusModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <form (ngSubmit)="confirmStatusChange()">
+        <div class="form-group">
+          <label>Nuevo Estado A Aplicar</label>
+          <input
+            type="text"
+            [value]="getStatusLabel(nextStatusToApply!)"
+            disabled
+            style="font-weight: bold;"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="statusComment">Observaciones / Comentario de Incidencia</label>
+          <textarea
+            id="statusComment"
+            name="statusComment"
+            [(ngModel)]="statusComment"
+            placeholder="Ej: Recibido en bodega central con empaque dañado..."
+            rows="3"
+            maxlength="500"
+          ></textarea>
+        </div>
+
+        <div class="form-info" *ngIf="errorMessage">
+          <span>!</span>
+          <p>{{ errorMessage }}</p>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="cancel-button"
+            [disabled]="saving"
+            (click)="closeStatusModal()"
+          >
+            Cancelar
+          </button>
 
           <button
             type="submit"
             class="save-button"
             [disabled]="saving"
           >
-
-            {{
-              saving
-                ? 'Registrando...'
-                : 'Registrar envío'
-            }}
-
+            {{ saving ? 'Guardando...' : 'Confirmar Estado' }}
           </button>
-
         </div>
-
       </form>
-
     </div>
-
   </div>
-
 </div>
