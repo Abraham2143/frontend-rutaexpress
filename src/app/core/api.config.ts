@@ -7,7 +7,7 @@ export const API_CONFIG = {
   useMocks: false,
 
   baseUrl:
-    'https://x29deu7hn0.execute-api.us-east-1.amazonaws.com',
+    'https://6lz3i7i888.execute-api.us-east-1.amazonaws.com',
 
   endpoints: {
 
