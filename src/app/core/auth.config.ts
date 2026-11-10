@@ -12,7 +12,7 @@ import {
 const CLIENT_ID = 'af669402-d208-48a2-bed7-56d4a6f3371d';
 const TENANT_ID = '86277ca6-e8ef-4000-96b5-190477b8912d';
 const APP_ORIGIN = window.location.origin;
-const API_GATEWAY_URL = 'https://x29deu7hn0.execute-api.us-east-1.amazonaws.com';
+const API_GATEWAY_URL = 'https://6lz3i7i888.execute-api.us-east-1.amazonaws.com';
 
 export const API_SCOPE = `api://${CLIENT_ID}/access_as_user`;
 
