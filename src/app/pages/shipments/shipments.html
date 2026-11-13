@@ -220,7 +220,7 @@
 
       <form (ngSubmit)="createShipment()">
         <div class="form-group">
-          <label for="clienteId">ID del Pedido / Cliente (Único)</label>
+          <label for="clienteId">ID del Pedido</label>
           <input
             id="clienteId"
             type="text"
@@ -311,11 +311,6 @@
           </select>
         </div>
 
-        <div class="form-info">
-          <span>i</span>
-          <p>El envío será registrado inicialmente en la <strong>Etapa 1: Pedido Recibido</strong>.</p>
-        </div>
-
         <div class="form-info" *ngIf="errorMessage">
           <span>!</span>
           <p>{{ errorMessage }}</p>
@@ -398,11 +393,6 @@
             rows="3"
             maxlength="500"
           ></textarea>
-        </div>
-
-        <div class="form-info" *ngIf="nextStatusToApply !== 'EN_RUTA'">
-          <span>i</span>
-          <p>La observación del estado de la caja se habilita en la <strong>Etapa 4: Retiro por Chofer</strong>.</p>
         </div>
 
         <div class="form-info" *ngIf="errorMessage">
