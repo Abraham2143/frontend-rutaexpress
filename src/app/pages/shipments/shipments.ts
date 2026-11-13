@@ -58,8 +58,7 @@ export class Shipments implements OnInit {
   statusComment = '';
 
   readonly quickObservations: string[] = [
-    'Paquete verificado sin novedades.',
-    'Caja presenta un hoyo leve en el costado al retirar.',
+    'Caja presenta un agujero o abolladura leve en el costado al retirar.',
     'Embalaje con desgaste, contenido intacto.',
     'Caja sellada y en buen estado al retiro.'
   ];
