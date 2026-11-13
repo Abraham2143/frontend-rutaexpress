@@ -64,6 +64,19 @@ export class Shipments implements OnInit {
   ];
 
   /* =====================================================
+     MODAL CANCELAR ENVÍO CON MOTIVO
+  ===================================================== */
+  showCancelModal = false;
+  selectedShipmentForCancel: ShipmentResponse | null = null;
+  cancelReason = '';
+
+  readonly quickCancelReasons: string[] = [
+    'Solicitud de cancelación por parte del cliente.',
+    'Error en los datos de destino o registro del pedido.',
+    'Pedido duplicado o sin disponibilidad operativa.'
+  ];
+
+  /* =====================================================
      MODAL TRAZABILIDAD (5 PROCESOS) Y COMENTARIOS
   ===================================================== */
   showDetailModal = false;
@@ -127,7 +140,7 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
-     GESTIÓN LOCAL DE PEDIDOS ELIMINADOS
+     GESTIÓN LOCAL DE PEDIDOS OCULTOS DE LA VISTA
   ===================================================== */
   private getDeletedIds(): number[] {
     try {
@@ -476,11 +489,76 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
-     ELIMINAR ENVÍO
+     MODAL CANCELAR ENVÍO CON MOTIVO
+  ===================================================== */
+  openCancelModal(shipment: ShipmentResponse): void {
+    if (shipment.status === 'ENTREGADO' || shipment.status === 'CANCELADO') return;
+    this.selectedShipmentForCancel = shipment;
+    this.cancelReason = '';
+    this.errorMessage = '';
+    this.showCancelModal = true;
+  }
+
+  closeCancelModal(): void {
+    if (this.saving) return;
+    this.showCancelModal = false;
+    this.selectedShipmentForCancel = null;
+    this.cancelReason = '';
+  }
+
+  applyQuickCancelReason(reason: string): void {
+    this.cancelReason = reason;
+  }
+
+  confirmCancelShipment(): void {
+    if (!this.selectedShipmentForCancel) return;
+
+    this.saving = true;
+    this.errorMessage = '';
+
+    const reasonToSend = this.cancelReason.trim()
+      ? this.cancelReason.trim()
+      : undefined;
+
+    this.shipmentsService
+      .updateStatus(
+        this.selectedShipmentForCancel.id,
+        'CANCELADO',
+        reasonToSend
+      )
+      .subscribe({
+        next: (updatedShipment) => {
+          const index = this.shipments.findIndex(
+            item => item.id === updatedShipment.id
+          );
+
+          if (index !== -1) {
+            this.shipments[index] = updatedShipment;
+            this.shipments = [...this.shipments];
+          }
+
+          this.saving = false;
+          this.closeCancelModal();
+          this.changeDetector.detectChanges();
+        },
+        error: (error) => {
+          console.error('Error cancelando envío:', error);
+          this.errorMessage = this.getErrorMessage(
+            error,
+            'No fue posible cancelar el envío.'
+          );
+          this.saving = false;
+          this.changeDetector.detectChanges();
+        }
+      });
+  }
+
+  /* =====================================================
+     ELIMINAR DE LA VISTA (PEDIDOS YA FINALIZADOS)
   ===================================================== */
   deleteShipment(shipment: ShipmentResponse): void {
     const confirmed = window.confirm(
-      `¿Seguro que deseas eliminar el pedido "${shipment.clienteId}" (#${shipment.trackingNumber})?`
+      `¿Ocultar de la lista el pedido "${shipment.clienteId}" (#${shipment.trackingNumber})?`
     );
 
     if (!confirmed) return;
@@ -489,15 +567,6 @@ export class Shipments implements OnInit {
     this.saveDeletedId(shipment.id);
     this.shipments = this.shipments.filter(item => item.id !== shipment.id);
     this.changeDetector.detectChanges();
-
-    if (shipment.status !== 'ENTREGADO' && shipment.status !== 'CANCELADO') {
-      this.shipmentsService
-        .updateStatus(shipment.id, 'CANCELADO', 'Pedido eliminado por error de registro.')
-        .subscribe({
-          next: () => {},
-          error: () => {}
-        });
-    }
   }
 
   /* =====================================================

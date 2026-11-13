@@ -70,7 +70,7 @@
       </div>
 
       <!-- ERROR GLOBAL -->
-      <div class="form-info" *ngIf="errorMessage && !showModal && !showStatusModal">
+      <div class="form-info" *ngIf="errorMessage && !showModal && !showStatusModal && !showCancelModal">
         <span>!</span>
         <p>{{ errorMessage }}</p>
       </div>
@@ -93,6 +93,7 @@
           <option value="EN_BODEGA">3. En sucursal</option>
           <option value="EN_RUTA">4. En ruta</option>
           <option value="ENTREGADO">5. Entregado</option>
+          <option value="CANCELADO">Cancelados</option>
         </select>
       </section>
 
@@ -141,6 +142,8 @@
                   [class.pending]="shipment.status === 'CREADO' || shipment.status === 'ACEPTADO'"
                   [class.transit]="shipment.status === 'EN_BODEGA' || shipment.status === 'EN_RUTA'"
                   [class.delivered]="shipment.status === 'ENTREGADO'"
+                  [style.background]="shipment.status === 'CANCELADO' ? '#fee2e2' : null"
+                  [style.color]="shipment.status === 'CANCELADO' ? '#dc2626' : null"
                 >
                   {{ getStatusLabel(shipment.status) }}
                 </span>
@@ -155,7 +158,7 @@
               <td>
                 <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
                   <button
-                    *ngIf="canChangeStatus"
+                    *ngIf="canChangeStatus && shipment.status !== 'CANCELADO'"
                     class="action-button"
                     type="button"
                     [disabled]="getNextStatus(shipment.status) === null"
@@ -173,12 +176,24 @@
                     Comentarios
                   </button>
 
+                  <!-- BOTÓN CANCELAR (SOLO SI EL PEDIDO SIGUE ACTIVO) -->
                   <button
-                    *ngIf="canChangeStatus || canCreateShipment"
+                    *ngIf="(canChangeStatus || canCreateShipment) && shipment.status !== 'ENTREGADO' && shipment.status !== 'CANCELADO'"
+                    type="button"
+                    (click)="openCancelModal(shipment)"
+                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; font-size: 12px; font-weight: 600; cursor: pointer;"
+                    title="Cancelar pedido y notificar al cliente"
+                  >
+                    Cancelar
+                  </button>
+
+                  <!-- BOTÓN ELIMINAR DE VISTA (SOLO SI YA FUE ENTREGADO O CANCELADO) -->
+                  <button
+                    *ngIf="(canChangeStatus || canCreateShipment) && (shipment.status === 'ENTREGADO' || shipment.status === 'CANCELADO')"
                     type="button"
                     (click)="deleteShipment(shipment)"
-                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; font-size: 12px; font-weight: 600; cursor: pointer;"
-                    title="Eliminar pedido"
+                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; font-size: 12px; font-weight: 600; cursor: pointer;"
+                    title="Ocultar pedido finalizado de la lista"
                   >
                     Eliminar
                   </button>
@@ -374,7 +389,7 @@
 
         <!-- CAMPO DE COMENTARIO SOLO CUANDO EL CHOFER RETIRA EL PEDIDO (EN_RUTA) -->
         <div class="form-group" *ngIf="nextStatusToApply === 'EN_RUTA'">
-          <label for="statusComment">Inspección de la caja al retiro (Chofer)</label>
+          <label for="statusComment">Inspección de la caja al retiro (Chofer - Opcional)</label>
           <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
             <button
               *ngFor="let obs of quickObservations"
@@ -389,7 +404,7 @@
             id="statusComment"
             name="statusComment"
             [(ngModel)]="statusComment"
-            placeholder="Ej: Al retirar el paquete el chofer detectó un agujero o abolladura en el costado..."
+            placeholder="Opcional: escribe una observación si detectaste algún detalle en el paquete..."
             rows="3"
             maxlength="500"
           ></textarea>
@@ -416,6 +431,80 @@
             [disabled]="saving"
           >
             {{ saving ? 'Guardando...' : 'Confirmar Etapa' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL CANCELAR ENVÍO CON MOTIVO -->
+  <div
+    class="modal-background"
+    *ngIf="showCancelModal && selectedShipmentForCancel"
+    (click)="closeCancelModal()"
+  >
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2>Cancelar Pedido</h2>
+          <p>ID: <strong>{{ selectedShipmentForCancel.clienteId }}</strong> (#{{ selectedShipmentForCancel.trackingNumber }})</p>
+        </div>
+
+        <button
+          class="close"
+          type="button"
+          [disabled]="saving"
+          (click)="closeCancelModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <form (ngSubmit)="confirmCancelShipment()">
+        <div class="form-group">
+          <label for="cancelReason">Motivo de cancelación (se enviará en la notificación)</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+            <button
+              *ngFor="let reason of quickCancelReasons"
+              type="button"
+              (click)="applyQuickCancelReason(reason)"
+              style="font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid #fecaca; background: #fef2f2; color: #991b1b; cursor: pointer;"
+            >
+              + {{ reason }}
+            </button>
+          </div>
+          <textarea
+            id="cancelReason"
+            name="cancelReason"
+            [(ngModel)]="cancelReason"
+            placeholder="Escribe el motivo de la cancelación (opcional)..."
+            rows="3"
+            maxlength="500"
+          ></textarea>
+        </div>
+
+        <div class="form-info" *ngIf="errorMessage">
+          <span>!</span>
+          <p>{{ errorMessage }}</p>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="cancel-button"
+            [disabled]="saving"
+            (click)="closeCancelModal()"
+          >
+            Volver
+          </button>
+
+          <button
+            type="submit"
+            class="save-button"
+            style="background: #dc2626;"
+            [disabled]="saving"
+          >
+            {{ saving ? 'Cancelando...' : 'Confirmar Cancelación' }}
           </button>
         </div>
       </form>
