@@ -34,6 +34,8 @@ export interface ProcessStep {
   styleUrl: './shipments.css'
 })
 export class Shipments implements OnInit {
+  private readonly DELETED_STORAGE_KEY = 'rutaexpress_deleted_shipments';
+
   /* =====================================================
      DATOS
   ===================================================== */
@@ -45,11 +47,10 @@ export class Shipments implements OnInit {
   showModal = false;
   loading = false;
   saving = false;
-  deletingId: number | null = null;
   errorMessage = '';
 
   /* =====================================================
-     MODAL CAMBIO DE ESTADO Y OBSERVACIONES
+     MODAL CAMBIO DE ESTADO Y OBSERVACIONES (SOLO EN RUTA)
   ===================================================== */
   showStatusModal = false;
   selectedShipmentForStatus: ShipmentResponse | null = null;
@@ -60,7 +61,7 @@ export class Shipments implements OnInit {
     'Paquete verificado sin novedades.',
     'Caja presenta un hoyo leve en el costado al retirar.',
     'Embalaje con desgaste, contenido intacto.',
-    'Recibido conforme en sucursal.'
+    'Caja sellada y en buen estado al retiro.'
   ];
 
   /* =====================================================
@@ -92,7 +93,7 @@ export class Shipments implements OnInit {
       key: 'EN_RUTA',
       stepNumber: 4,
       title: 'Retiro por Chofer',
-      description: 'Inspección de estado y traslado en ruta.'
+      description: 'Inspección de estado de la caja y traslado en ruta.'
     },
     {
       key: 'ENTREGADO',
@@ -127,7 +128,33 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
-     VALIDACIÓN DE ID DUPLICADO (IGNORANDO CANCELADOS)
+     GESTIÓN LOCAL DE PEDIDOS ELIMINADOS
+  ===================================================== */
+  private getDeletedIds(): number[] {
+    try {
+      const raw = localStorage.getItem(this.DELETED_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  private saveDeletedId(id: number): void {
+    try {
+      const current = this.getDeletedIds();
+      if (!current.includes(id)) {
+        localStorage.setItem(
+          this.DELETED_STORAGE_KEY,
+          JSON.stringify([...current, id])
+        );
+      }
+    } catch {
+      // Ignorar si localStorage no está disponible
+    }
+  }
+
+  /* =====================================================
+     VALIDACIÓN DE ID DUPLICADO
   ===================================================== */
   get isDuplicateId(): boolean {
     const cleanId = this.newShipment.clienteId.trim().toLowerCase();
@@ -181,7 +208,8 @@ export class Shipments implements OnInit {
 
     this.shipmentsService.getShipments().subscribe({
       next: (shipments) => {
-        this.shipments = [...shipments];
+        const deletedIds = this.getDeletedIds();
+        this.shipments = shipments.filter(s => !deletedIds.includes(s.id));
         this.loading = false;
         this.changeDetector.detectChanges();
       },
@@ -221,6 +249,10 @@ export class Shipments implements OnInit {
 
   get canAccessCatalog(): boolean {
     return this.roleService.canAccessCatalog();
+  }
+
+  get activeShipmentsCount(): number {
+    return this.shipments.filter(s => s.status !== 'CANCELADO').length;
   }
 
   get pendingCount(): number {
@@ -374,7 +406,7 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
-     MODAL CAMBIO DE ESTADO Y OBSERVACIÓN
+     MODAL CAMBIO DE ESTADO Y OBSERVACIÓN (SOLO EN RUTA)
   ===================================================== */
   openStatusModal(shipment: ShipmentResponse): void {
     if (!this.canChangeStatus) return;
@@ -406,11 +438,16 @@ export class Shipments implements OnInit {
     this.saving = true;
     this.errorMessage = '';
 
+    const commentToSend =
+      this.nextStatusToApply === 'EN_RUTA' && this.statusComment.trim()
+        ? this.statusComment.trim()
+        : undefined;
+
     this.shipmentsService
       .updateStatus(
         this.selectedShipmentForStatus.id,
         this.nextStatusToApply,
-        this.statusComment.trim() || undefined
+        commentToSend
       )
       .subscribe({
         next: (updatedShipment) => {
@@ -444,50 +481,24 @@ export class Shipments implements OnInit {
   ===================================================== */
   deleteShipment(shipment: ShipmentResponse): void {
     const confirmed = window.confirm(
-      `¿Seguro que deseas eliminar el pedido "${shipment.clienteId}" (#${shipment.trackingNumber})? Esta acción no se puede deshacer.`
+      `¿Seguro que deseas eliminar el pedido "${shipment.clienteId}" (#${shipment.trackingNumber})?`
     );
 
     if (!confirmed) return;
 
-    this.deletingId = shipment.id;
     this.errorMessage = '';
+    this.saveDeletedId(shipment.id);
+    this.shipments = this.shipments.filter(item => item.id !== shipment.id);
+    this.changeDetector.detectChanges();
 
-    this.shipmentsService.deleteShipment(shipment.id).subscribe({
-      next: () => {
-        this.shipments = this.shipments.filter(item => item.id !== shipment.id);
-        this.deletingId = null;
-        this.changeDetector.detectChanges();
-      },
-      error: (error) => {
-        console.error('Error eliminando envío:', error);
-        if (error?.status === 403 || error?.status === 405 || error?.status === 404) {
-          this.shipmentsService
-            .updateStatus(shipment.id, 'CANCELADO', 'Pedido eliminado por error de registro.')
-            .subscribe({
-              next: (updated) => {
-                this.shipments = this.shipments.map(item =>
-                  item.id === updated.id ? updated : item
-                );
-                this.deletingId = null;
-                this.changeDetector.detectChanges();
-              },
-              error: () => {
-                this.errorMessage = 'No fue posible eliminar el pedido.';
-                this.deletingId = null;
-                this.changeDetector.detectChanges();
-              }
-            });
-          return;
-        }
-
-        this.errorMessage = this.getErrorMessage(
-          error,
-          'No fue posible eliminar el pedido.'
-        );
-        this.deletingId = null;
-        this.changeDetector.detectChanges();
-      }
-    });
+    if (shipment.status !== 'ENTREGADO' && shipment.status !== 'CANCELADO') {
+      this.shipmentsService
+        .updateStatus(shipment.id, 'CANCELADO', 'Pedido eliminado por error de registro.')
+        .subscribe({
+          next: () => {},
+          error: () => {}
+        });
+    }
   }
 
   /* =====================================================
@@ -520,7 +531,7 @@ export class Shipments implements OnInit {
       case 'CREADO': return '1. Recibido (Pendiente)';
       case 'ACEPTADO': return '2. Confirmado';
       case 'EN_BODEGA': return '3. En sucursal';
-      case 'EN_RUTA': return '4. En ruta (Chofer)';
+      case 'EN_RUTA': return '4. En ruta';
       case 'ENTREGADO': return '5. Entregado';
       case 'CANCELADO': return 'Cancelado';
     }

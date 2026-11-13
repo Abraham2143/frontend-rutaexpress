@@ -51,7 +51,7 @@
       <div class="summary">
         <div class="summary-card">
           <span>Total de envíos</span>
-          <strong>{{ shipments.length }}</strong>
+          <strong>{{ activeShipmentsCount }}</strong>
         </div>
         <div class="summary-card">
           <span>Pendientes</span>
@@ -91,9 +91,8 @@
           <option value="CREADO">1. Recibido (Pendiente)</option>
           <option value="ACEPTADO">2. Confirmado</option>
           <option value="EN_BODEGA">3. En sucursal</option>
-          <option value="EN_RUTA">4. En ruta (Chofer)</option>
+          <option value="EN_RUTA">4. En ruta</option>
           <option value="ENTREGADO">5. Entregado</option>
-          <option value="CANCELADO">Cancelado</option>
         </select>
       </section>
 
@@ -177,12 +176,11 @@
                   <button
                     *ngIf="canChangeStatus || canCreateShipment"
                     type="button"
-                    [disabled]="deletingId === shipment.id"
                     (click)="deleteShipment(shipment)"
                     style="padding: 6px 10px; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; font-size: 12px; font-weight: 600; cursor: pointer;"
                     title="Eliminar pedido"
                   >
-                    {{ deletingId === shipment.id ? '...' : 'Eliminar' }}
+                    Eliminar
                   </button>
                 </div>
               </td>
@@ -345,7 +343,7 @@
     </div>
   </div>
 
-  <!-- MODAL CAMBIO DE ESTADO Y OBSERVACIÓN DE CHOFER -->
+  <!-- MODAL CAMBIO DE ESTADO Y OBSERVACIÓN (COMENTARIO SOLO EN ETAPA 4: EN RUTA) -->
   <div
     class="modal-background"
     *ngIf="showStatusModal"
@@ -379,8 +377,9 @@
           >
         </div>
 
-        <div class="form-group">
-          <label for="statusComment">Comentario / Inspección del Chofer o Sucursal</label>
+        <!-- CAMPO DE COMENTARIO SOLO CUANDO EL CHOFER RETIRA EL PEDIDO (EN_RUTA) -->
+        <div class="form-group" *ngIf="nextStatusToApply === 'EN_RUTA'">
+          <label for="statusComment">Inspección de la caja al retiro (Chofer)</label>
           <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
             <button
               *ngFor="let obs of quickObservations"
@@ -395,10 +394,15 @@
             id="statusComment"
             name="statusComment"
             [(ngModel)]="statusComment"
-            placeholder="Ej: Al retirar el paquete en sucursal el chofer detectó un hoyo en el costado..."
+            placeholder="Ej: Al retirar el paquete el chofer detectó un hoyo en el costado..."
             rows="3"
             maxlength="500"
           ></textarea>
+        </div>
+
+        <div class="form-info" *ngIf="nextStatusToApply !== 'EN_RUTA'">
+          <span>i</span>
+          <p>La observación del estado de la caja se habilita en la <strong>Etapa 4: Retiro por Chofer</strong>.</p>
         </div>
 
         <div class="form-info" *ngIf="errorMessage">
@@ -479,10 +483,10 @@
         </div>
       </div>
 
-      <!-- BITÁCORA DE OBSERVACIONES DEL CHOFER / SUCURSAL -->
+      <!-- BITÁCORA DE OBSERVACIONES -->
       <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
         <strong style="display: block; font-size: 13px; color: #92400e; margin-bottom: 4px;">
-          Bitácora de Inspección y Comentarios (Chofer / Sucursal)
+          Bitácora de Inspección y Comentarios
         </strong>
         <p style="margin: 0; font-size: 13px; color: #78350f;">
           {{ selectedShipmentForDetail.ultimoComentario || 'Sin observaciones o incidencias registradas hasta el momento.' }}
@@ -504,7 +508,7 @@
           class="save-button"
           (click)="advanceFromDetail()"
         >
-          Avanzar etapa y comentar →
+          {{ getNextStatus(selectedShipmentForDetail.status) === 'EN_RUTA' ? 'Avanzar etapa y comentar →' : 'Avanzar etapa →' }}
         </button>
       </div>
     </div>
