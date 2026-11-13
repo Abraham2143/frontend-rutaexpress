@@ -44,7 +44,7 @@
     <section class="body">
       <div class="intro">
         <h2>Envíos</h2>
-        <p>Consulta y administra los envíos registrados en RutaExpress.</p>
+        <p>Consulta la trazabilidad de las 5 etapas, observaciones del chofer y estado de los envíos.</p>
       </div>
 
       <!-- RESUMEN -->
@@ -82,17 +82,17 @@
           <input
             type="text"
             [(ngModel)]="searchTerm"
-            placeholder="Buscar por tracking, destinatario, cliente o destino..."
+            placeholder="Buscar por ID, tracking, destinatario o destino..."
           >
         </div>
 
         <select [(ngModel)]="statusFilter">
           <option value="Todos">Todos los estados</option>
-          <option value="CREADO">Pendiente</option>
-          <option value="ACEPTADO">Aceptado</option>
-          <option value="EN_BODEGA">En bodega</option>
-          <option value="EN_RUTA">En tránsito</option>
-          <option value="ENTREGADO">Entregado</option>
+          <option value="CREADO">1. Recibido (Pendiente)</option>
+          <option value="ACEPTADO">2. Confirmado</option>
+          <option value="EN_BODEGA">3. En sucursal</option>
+          <option value="EN_RUTA">4. En ruta (Chofer)</option>
+          <option value="ENTREGADO">5. Entregado</option>
           <option value="CANCELADO">Cancelado</option>
         </select>
       </section>
@@ -107,13 +107,25 @@
               <th>DESTINO</th>
               <th>SERVICIO</th>
               <th>FECHA</th>
-              <th>ESTADO</th>
-              <th *ngIf="canChangeStatus">ACCIÓN</th>
+              <th>ESTADO / OBSERVACIÓN</th>
+              <th>ACCIÓN</th>
             </tr>
           </thead>
           <tbody>
             <tr *ngFor="let shipment of filteredShipments">
-              <td class="id">#{{ shipment.trackingNumber }}</td>
+              <td class="id">
+                <button
+                  type="button"
+                  (click)="openDetailModal(shipment)"
+                  title="Ver los 5 procesos y comentarios"
+                  style="background: none; border: none; padding: 0; color: #2563eb; font-weight: 700; font-size: 14px; cursor: pointer; text-align: left;"
+                >
+                  {{ shipment.clienteId }}
+                </button>
+                <small style="display: block; color: #64748b; font-weight: 400; font-size: 11px;">
+                  #{{ shipment.trackingNumber }}
+                </small>
+              </td>
               <td>
                 <strong>{{ shipment.destinatarioNombre }}</strong>
                 <small>{{ shipment.destinatarioEmail }}</small>
@@ -133,16 +145,46 @@
                 >
                   {{ getStatusLabel(shipment.status) }}
                 </span>
-              </td>
-              <td *ngIf="canChangeStatus">
-                <button
-                  class="action-button"
-                  type="button"
-                  [disabled]="getNextStatus(shipment.status) === null"
-                  (click)="openStatusModal(shipment)"
+                <small
+                  *ngIf="shipment.ultimoComentario"
+                  style="display: block; margin-top: 4px; color: #475569; max-width: 210px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"
+                  [title]="shipment.ultimoComentario"
                 >
-                  {{ getActionLabel(shipment.status) }}
-                </button>
+                  💬 {{ shipment.ultimoComentario }}
+                </small>
+              </td>
+              <td>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
+                  <button
+                    *ngIf="canChangeStatus"
+                    class="action-button"
+                    type="button"
+                    [disabled]="getNextStatus(shipment.status) === null"
+                    (click)="openStatusModal(shipment)"
+                  >
+                    {{ getActionLabel(shipment.status) }}
+                  </button>
+
+                  <button
+                    type="button"
+                    (click)="openDetailModal(shipment)"
+                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b; font-size: 12px; font-weight: 600; cursor: pointer;"
+                    title="Ver seguimiento de 5 etapas y comentarios"
+                  >
+                    Comentarios
+                  </button>
+
+                  <button
+                    *ngIf="canChangeStatus || canCreateShipment"
+                    type="button"
+                    [disabled]="deletingId === shipment.id"
+                    (click)="deleteShipment(shipment)"
+                    style="padding: 6px 10px; border-radius: 8px; border: 1px solid #fecaca; background: #fef2f2; color: #dc2626; font-size: 12px; font-weight: 600; cursor: pointer;"
+                    title="Eliminar pedido"
+                  >
+                    {{ deletingId === shipment.id ? '...' : 'Eliminar' }}
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -165,7 +207,7 @@
       <div class="modal-header">
         <div>
           <h2>Nuevo envío</h2>
-          <p>Registra un nuevo envío en RutaExpress.</p>
+          <p>Registra un nuevo envío con un ID único en RutaExpress.</p>
         </div>
 
         <button
@@ -180,16 +222,23 @@
 
       <form (ngSubmit)="createShipment()">
         <div class="form-group">
-          <label for="clienteId">Cliente (RUT / Identificador)</label>
+          <label for="clienteId">ID del Pedido / Cliente (Único)</label>
           <input
             id="clienteId"
             type="text"
             name="clienteId"
             [(ngModel)]="newShipment.clienteId"
-            placeholder="Ej: 12345678-9"
+            placeholder="Ej: PED-007"
             maxlength="100"
             required
+            [style.borderColor]="isDuplicateId ? '#dc2626' : null"
           >
+          <small
+            *ngIf="isDuplicateId"
+            style="display: block; margin-top: 4px; color: #dc2626; font-weight: 600;"
+          >
+            Este ID ya está registrado en un envío existente. Ingresa uno distinto para continuar.
+          </small>
         </div>
 
         <div class="form-group">
@@ -266,7 +315,7 @@
 
         <div class="form-info">
           <span>i</span>
-          <p>El envío será registrado inicialmente con estado <strong>Pendiente</strong>.</p>
+          <p>El envío será registrado inicialmente en la <strong>Etapa 1: Pedido Recibido</strong>.</p>
         </div>
 
         <div class="form-info" *ngIf="errorMessage">
@@ -287,7 +336,7 @@
           <button
             type="submit"
             class="save-button"
-            [disabled]="saving"
+            [disabled]="saving || isDuplicateId"
           >
             {{ saving ? 'Registrando...' : 'Registrar envío' }}
           </button>
@@ -305,8 +354,8 @@
     <div class="modal" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div>
-          <h2>Actualizar Estado</h2>
-          <p>Envío #{{ selectedShipmentForStatus?.trackingNumber }}</p>
+          <h2>Actualizar Etapa del Pedido</h2>
+          <p>ID: <strong>{{ selectedShipmentForStatus?.clienteId }}</strong> (#{{ selectedShipmentForStatus?.trackingNumber }})</p>
         </div>
 
         <button
@@ -321,22 +370,32 @@
 
       <form (ngSubmit)="confirmStatusChange()">
         <div class="form-group">
-          <label>Nuevo Estado A Aplicar</label>
+          <label>Siguiente Etapa del Proceso</label>
           <input
             type="text"
-            [value]="getStatusLabel(nextStatusToApply!)"
+            [value]="getStatusLabel(nextStatusToApply)"
             disabled
             style="font-weight: bold;"
           >
         </div>
 
         <div class="form-group">
-          <label for="statusComment">Observaciones / Comentario de Incidencia</label>
+          <label for="statusComment">Comentario / Inspección del Chofer o Sucursal</label>
+          <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px;">
+            <button
+              *ngFor="let obs of quickObservations"
+              type="button"
+              (click)="applyQuickObservation(obs)"
+              style="font-size: 11px; padding: 4px 8px; border-radius: 999px; border: 1px solid #cbd5e1; background: #f1f5f9; color: #334155; cursor: pointer;"
+            >
+              + {{ obs }}
+            </button>
+          </div>
           <textarea
             id="statusComment"
             name="statusComment"
             [(ngModel)]="statusComment"
-            placeholder="Ej: Recibido en bodega central con empaque dañado..."
+            placeholder="Ej: Al retirar el paquete en sucursal el chofer detectó un hoyo en el costado..."
             rows="3"
             maxlength="500"
           ></textarea>
@@ -362,10 +421,92 @@
             class="save-button"
             [disabled]="saving"
           >
-            {{ saving ? 'Guardando...' : 'Confirmar Estado' }}
+            {{ saving ? 'Guardando...' : 'Confirmar Etapa' }}
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL SEGUIMIENTO 5 PROCESOS Y BITÁCORA DE COMENTARIOS -->
+  <div
+    class="modal-background"
+    *ngIf="showDetailModal && selectedShipmentForDetail"
+    (click)="closeDetailModal()"
+  >
+    <div class="modal" style="max-width: 620px;" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div>
+          <h2>Trazabilidad del Envío — {{ selectedShipmentForDetail.clienteId }}</h2>
+          <p>Tracking interno: #{{ selectedShipmentForDetail.trackingNumber }} · Destinatario: {{ selectedShipmentForDetail.destinatarioNombre }}</p>
+        </div>
+
+        <button
+          class="close"
+          type="button"
+          (click)="closeDetailModal()"
+        >
+          ×
+        </button>
+      </div>
+
+      <!-- STEPPER DE LOS 5 PROCESOS -->
+      <div style="margin: 12px 0 18px; display: flex; flex-direction: column; gap: 10px;">
+        <div
+          *ngFor="let step of processSteps"
+          [style.background]="isStepCurrent(selectedShipmentForDetail.status, step.key) ? '#eff6ff' : (isStepCompleted(selectedShipmentForDetail.status, step.key) ? '#f0fdf4' : '#f8fafc')"
+          [style.borderColor]="isStepCurrent(selectedShipmentForDetail.status, step.key) ? '#3b82f6' : (isStepCompleted(selectedShipmentForDetail.status, step.key) ? '#86efac' : '#e2e8f0')"
+          style="display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-radius: 10px; border: 1px solid #e2e8f0;"
+        >
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <span
+              [style.background]="isStepCompleted(selectedShipmentForDetail.status, step.key) ? '#2563eb' : '#cbd5e1'"
+              style="width: 26px; height: 26px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;"
+            >
+              {{ isStepCompleted(selectedShipmentForDetail.status, step.key) ? '✓' : step.stepNumber }}
+            </span>
+            <div>
+              <strong style="display: block; font-size: 13px; color: #0f172a;">
+                {{ step.stepNumber }}. {{ step.title }}
+              </strong>
+              <small style="color: #475569; font-size: 12px;">{{ step.description }}</small>
+            </div>
+          </div>
+
+          <span style="font-size: 11px; font-weight: 600; color: #475569; text-align: right;">
+            {{ getStepDate(selectedShipmentForDetail, step.key) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- BITÁCORA DE OBSERVACIONES DEL CHOFER / SUCURSAL -->
+      <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px;">
+        <strong style="display: block; font-size: 13px; color: #92400e; margin-bottom: 4px;">
+          Bitácora de Inspección y Comentarios (Chofer / Sucursal)
+        </strong>
+        <p style="margin: 0; font-size: 13px; color: #78350f;">
+          {{ selectedShipmentForDetail.ultimoComentario || 'Sin observaciones o incidencias registradas hasta el momento.' }}
+        </p>
+      </div>
+
+      <div class="modal-actions">
+        <button
+          type="button"
+          class="cancel-button"
+          (click)="closeDetailModal()"
+        >
+          Cerrar
+        </button>
+
+        <button
+          *ngIf="canChangeStatus && getNextStatus(selectedShipmentForDetail.status) !== null"
+          type="button"
+          class="save-button"
+          (click)="advanceFromDetail()"
+        >
+          Avanzar etapa y comentar →
+        </button>
+      </div>
     </div>
   </div>
 </div>
