@@ -127,14 +127,16 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
-     VALIDACIÓN DE ID DUPLICADO
+     VALIDACIÓN DE ID DUPLICADO (IGNORANDO CANCELADOS)
   ===================================================== */
   get isDuplicateId(): boolean {
     const cleanId = this.newShipment.clienteId.trim().toLowerCase();
     if (!cleanId) return false;
 
     return this.shipments.some(
-      s => (s.clienteId || '').trim().toLowerCase() === cleanId
+      s =>
+        s.status !== 'CANCELADO' &&
+        (s.clienteId || '').trim().toLowerCase() === cleanId
     );
   }
 
@@ -236,7 +238,9 @@ export class Shipments implements OnInit {
         shipment.clienteId.toLowerCase().includes(text);
 
       const matchesStatus =
-        this.statusFilter === 'Todos' || shipment.status === this.statusFilter;
+        this.statusFilter === 'Todos'
+          ? shipment.status !== 'CANCELADO'
+          : shipment.status === this.statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -456,8 +460,7 @@ export class Shipments implements OnInit {
       },
       error: (error) => {
         console.error('Error eliminando envío:', error);
-        // Si el backend no tiene DELETE habilitado (405), se anula como CANCELADO como respaldo
-        if (error?.status === 405 || error?.status === 404) {
+        if (error?.status === 403 || error?.status === 405 || error?.status === 404) {
           this.shipmentsService
             .updateStatus(shipment.id, 'CANCELADO', 'Pedido eliminado por error de registro.')
             .subscribe({
@@ -469,7 +472,7 @@ export class Shipments implements OnInit {
                 this.changeDetector.detectChanges();
               },
               error: () => {
-                this.errorMessage = 'No fue posible eliminar ni cancelar el pedido.';
+                this.errorMessage = 'No fue posible eliminar el pedido.';
                 this.deletingId = null;
                 this.changeDetector.detectChanges();
               }
