@@ -31,6 +31,7 @@ export interface ShipmentResponse {
   fechaAceptacion: string | null;
   fechaEntrega: string | null;
   creadoPor: string;
+  ultimoComentario?: string | null;
 }
 
 /* =====================================================
@@ -50,7 +51,7 @@ export interface CreateShipmentRequest {
 ===================================================== */
 export interface UpdateShipmentStatusRequest {
   status: ShipmentStatus;
-  comment?: string; // 👈 Soporte para observaciones del chofer/sucursal
+  comment?: string;
 }
 
 /* =====================================================
@@ -102,7 +103,7 @@ export class ShipmentsService {
   }
 
   /* =========================
-     CAMBIAR ESTADO
+     CAMBIAR ESTADO Y COMENTARIO
   ========================== */
   updateStatus(
     id: number,
@@ -118,5 +119,12 @@ export class ShipmentsService {
       `${this.apiUrl}/${id}/status`,
       request
     );
+  }
+
+  /* =========================
+     ELIMINAR ENVÍO
+  ========================== */
+  deleteShipment(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 }

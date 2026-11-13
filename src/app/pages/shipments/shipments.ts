@@ -16,6 +16,13 @@ import {
 } from '../../service/shipments.service';
 import { CatalogService } from '../../service/catalog.service';
 
+export interface ProcessStep {
+  key: ShipmentStatus;
+  stepNumber: number;
+  title: string;
+  description: string;
+}
+
 @Component({
   selector: 'app-shipments',
   imports: [
@@ -38,6 +45,7 @@ export class Shipments implements OnInit {
   showModal = false;
   loading = false;
   saving = false;
+  deletingId: number | null = null;
   errorMessage = '';
 
   /* =====================================================
@@ -47,6 +55,52 @@ export class Shipments implements OnInit {
   selectedShipmentForStatus: ShipmentResponse | null = null;
   nextStatusToApply: ShipmentStatus | null = null;
   statusComment = '';
+
+  readonly quickObservations: string[] = [
+    'Paquete verificado sin novedades.',
+    'Caja presenta un hoyo leve en el costado al retirar.',
+    'Embalaje con desgaste, contenido intacto.',
+    'Recibido conforme en sucursal.'
+  ];
+
+  /* =====================================================
+     MODAL TRAZABILIDAD (5 PROCESOS) Y COMENTARIOS
+  ===================================================== */
+  showDetailModal = false;
+  selectedShipmentForDetail: ShipmentResponse | null = null;
+
+  readonly processSteps: ProcessStep[] = [
+    {
+      key: 'CREADO',
+      stepNumber: 1,
+      title: 'Pedido Recibido',
+      description: 'Solicitud registrada en plataforma.'
+    },
+    {
+      key: 'ACEPTADO',
+      stepNumber: 2,
+      title: 'Pedido Confirmado',
+      description: 'Orden validada para gestión logística.'
+    },
+    {
+      key: 'EN_BODEGA',
+      stepNumber: 3,
+      title: 'Llegada a Sucursal',
+      description: 'Paquete recepcionado en sucursal/bodega.'
+    },
+    {
+      key: 'EN_RUTA',
+      stepNumber: 4,
+      title: 'Retiro por Chofer',
+      description: 'Inspección de estado y traslado en ruta.'
+    },
+    {
+      key: 'ENTREGADO',
+      stepNumber: 5,
+      title: 'Entrega Realizada',
+      description: 'Pedido entregado en destino final.'
+    }
+  ];
 
   /* =====================================================
      NUEVO ENVÍO
@@ -70,6 +124,18 @@ export class Shipments implements OnInit {
   ngOnInit(): void {
     this.loadShipments();
     this.loadCatalogServices();
+  }
+
+  /* =====================================================
+     VALIDACIÓN DE ID DUPLICADO
+  ===================================================== */
+  get isDuplicateId(): boolean {
+    const cleanId = this.newShipment.clienteId.trim().toLowerCase();
+    if (!cleanId) return false;
+
+    return this.shipments.some(
+      s => (s.clienteId || '').trim().toLowerCase() === cleanId
+    );
   }
 
   /* =====================================================
@@ -205,10 +271,20 @@ export class Shipments implements OnInit {
       return;
     }
 
+    if (this.isDuplicateId) {
+      this.errorMessage = `El ID "${this.newShipment.clienteId.trim()}" ya existe. Ingresa un ID diferente.`;
+      return;
+    }
+
+    const payload: CreateShipmentRequest = {
+      ...this.newShipment,
+      clienteId: this.newShipment.clienteId.trim()
+    };
+
     this.saving = true;
     this.errorMessage = '';
 
-    this.shipmentsService.createShipment(this.newShipment).subscribe({
+    this.shipmentsService.createShipment(payload).subscribe({
       next: (shipment) => {
         this.shipments = [shipment, ...this.shipments];
         this.resetForm();
@@ -245,6 +321,55 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
+     MODAL DETALLE / 5 PROCESOS Y COMENTARIOS
+  ===================================================== */
+  openDetailModal(shipment: ShipmentResponse): void {
+    this.selectedShipmentForDetail = shipment;
+    this.showDetailModal = true;
+  }
+
+  closeDetailModal(): void {
+    this.showDetailModal = false;
+    this.selectedShipmentForDetail = null;
+  }
+
+  advanceFromDetail(): void {
+    if (!this.selectedShipmentForDetail) return;
+    const target = this.selectedShipmentForDetail;
+    this.closeDetailModal();
+    this.openStatusModal(target);
+  }
+
+  getStepIndex(status: ShipmentStatus): number {
+    const order: ShipmentStatus[] = [
+      'CREADO',
+      'ACEPTADO',
+      'EN_BODEGA',
+      'EN_RUTA',
+      'ENTREGADO'
+    ];
+    return order.indexOf(status);
+  }
+
+  isStepCompleted(shipmentStatus: ShipmentStatus, stepKey: ShipmentStatus): boolean {
+    const currentIdx = this.getStepIndex(shipmentStatus);
+    const stepIdx = this.getStepIndex(stepKey);
+    return currentIdx !== -1 && stepIdx <= currentIdx;
+  }
+
+  isStepCurrent(shipmentStatus: ShipmentStatus, stepKey: ShipmentStatus): boolean {
+    return shipmentStatus === stepKey;
+  }
+
+  getStepDate(shipment: ShipmentResponse, stepKey: ShipmentStatus): string {
+    if (stepKey === 'CREADO') return this.formatDateTime(shipment.fechaCreacion);
+    if (stepKey === 'ACEPTADO') return this.formatDateTime(shipment.fechaAceptacion);
+    if (stepKey === 'ENTREGADO') return this.formatDateTime(shipment.fechaEntrega);
+    if (this.isStepCompleted(shipment.status, stepKey)) return 'Completado';
+    return 'Pendiente';
+  }
+
+  /* =====================================================
      MODAL CAMBIO DE ESTADO Y OBSERVACIÓN
   ===================================================== */
   openStatusModal(shipment: ShipmentResponse): void {
@@ -267,6 +392,10 @@ export class Shipments implements OnInit {
     this.nextStatusToApply = null;
   }
 
+  applyQuickObservation(text: string): void {
+    this.statusComment = text;
+  }
+
   confirmStatusChange(): void {
     if (!this.selectedShipmentForStatus || !this.nextStatusToApply) return;
 
@@ -277,7 +406,7 @@ export class Shipments implements OnInit {
       .updateStatus(
         this.selectedShipmentForStatus.id,
         this.nextStatusToApply,
-        this.statusComment
+        this.statusComment.trim() || undefined
       )
       .subscribe({
         next: (updatedShipment) => {
@@ -307,6 +436,58 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
+     ELIMINAR ENVÍO
+  ===================================================== */
+  deleteShipment(shipment: ShipmentResponse): void {
+    const confirmed = window.confirm(
+      `¿Seguro que deseas eliminar el pedido "${shipment.clienteId}" (#${shipment.trackingNumber})? Esta acción no se puede deshacer.`
+    );
+
+    if (!confirmed) return;
+
+    this.deletingId = shipment.id;
+    this.errorMessage = '';
+
+    this.shipmentsService.deleteShipment(shipment.id).subscribe({
+      next: () => {
+        this.shipments = this.shipments.filter(item => item.id !== shipment.id);
+        this.deletingId = null;
+        this.changeDetector.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error eliminando envío:', error);
+        // Si el backend no tiene DELETE habilitado (405), se anula como CANCELADO como respaldo
+        if (error?.status === 405 || error?.status === 404) {
+          this.shipmentsService
+            .updateStatus(shipment.id, 'CANCELADO', 'Pedido eliminado por error de registro.')
+            .subscribe({
+              next: (updated) => {
+                this.shipments = this.shipments.map(item =>
+                  item.id === updated.id ? updated : item
+                );
+                this.deletingId = null;
+                this.changeDetector.detectChanges();
+              },
+              error: () => {
+                this.errorMessage = 'No fue posible eliminar ni cancelar el pedido.';
+                this.deletingId = null;
+                this.changeDetector.detectChanges();
+              }
+            });
+          return;
+        }
+
+        this.errorMessage = this.getErrorMessage(
+          error,
+          'No fue posible eliminar el pedido.'
+        );
+        this.deletingId = null;
+        this.changeDetector.detectChanges();
+      }
+    });
+  }
+
+  /* =====================================================
      UTILIDADES DE ESTADO Y FORMATO
   ===================================================== */
   getNextStatus(status: ShipmentStatus): ShipmentStatus | null {
@@ -321,22 +502,23 @@ export class Shipments implements OnInit {
 
   getActionLabel(status: ShipmentStatus): string {
     switch (status) {
-      case 'CREADO': return 'Aceptar';
-      case 'ACEPTADO': return 'Enviar a bodega';
-      case 'EN_BODEGA': return 'Despachar';
-      case 'EN_RUTA': return 'Entregar';
+      case 'CREADO': return 'Confirmar pedido';
+      case 'ACEPTADO': return 'Ingresar a sucursal';
+      case 'EN_BODEGA': return 'Retiro chofer (Ruta)';
+      case 'EN_RUTA': return 'Marcar entregado';
       case 'ENTREGADO': return 'Completado';
       case 'CANCELADO': return 'Cancelado';
     }
   }
 
-  getStatusLabel(status: ShipmentStatus): string {
+  getStatusLabel(status: ShipmentStatus | null): string {
+    if (!status) return '-';
     switch (status) {
-      case 'CREADO': return 'Pendiente';
-      case 'ACEPTADO': return 'Aceptado';
-      case 'EN_BODEGA': return 'En bodega';
-      case 'EN_RUTA': return 'En tránsito';
-      case 'ENTREGADO': return 'Entregado';
+      case 'CREADO': return '1. Recibido (Pendiente)';
+      case 'ACEPTADO': return '2. Confirmado';
+      case 'EN_BODEGA': return '3. En sucursal';
+      case 'EN_RUTA': return '4. En ruta (Chofer)';
+      case 'ENTREGADO': return '5. Entregado';
       case 'CANCELADO': return 'Cancelado';
     }
   }
@@ -354,6 +536,19 @@ export class Shipments implements OnInit {
     const parsedDate = new Date(date);
     if (Number.isNaN(parsedDate.getTime())) return date;
     return parsedDate.toLocaleDateString('es-CL');
+  }
+
+  formatDateTime(date: string | null): string {
+    if (!date) return '-';
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) return date;
+    return parsedDate.toLocaleString('es-CL', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   }
 
   private getErrorMessage(error: any, fallback: string): string {
