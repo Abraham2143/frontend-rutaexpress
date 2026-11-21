@@ -5,6 +5,8 @@ import { Dashboard } from './pages/dashboard/dashboard';
 import { Shipments } from './pages/shipments/shipments';
 import { Catalog } from './pages/catalog/catalog';
 import { AuthCallback } from './pages/auth-callback/auth-callback';
+import { Reportes } from './pages/reportes/reportes';
+import { Auditoria } from './pages/auditoria/auditoria';
 
 export const routes: Routes = [
   { path: 'auth/callback', component: AuthCallback },
@@ -13,6 +15,8 @@ export const routes: Routes = [
   { path: 'shipments', component: Shipments, canActivate: [MsalGuard] },
   { path: 'catalog', component: Catalog, canActivate: [MsalGuard] },
   { path: 'catalogo', component: Catalog, canActivate: [MsalGuard] },
+  { path: 'reportes', component: Reportes, canActivate: [MsalGuard] },
+  { path: 'auditoria', component: Auditoria, canActivate: [MsalGuard] },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' }
 ];
