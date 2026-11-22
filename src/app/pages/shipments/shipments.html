@@ -1,34 +1,52 @@
 <div class="page">
   <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="brand">
-      <div class="brand-icon">R</div>
-      <span>RutaExpress</span>
+  <aside class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between;">
+    <div>
+      <div class="brand">
+        <div class="brand-icon">R</div>
+        <span>RutaExpress</span>
+      </div>
+
+      <nav class="menu">
+        <p class="menu-title">MENÚ</p>
+        <a class="menu-item" routerLink="/dashboard">
+          <span class="menu-icon">⌂</span>
+          <span>Inicio</span>
+        </a>
+        <a *ngIf="canAccessShipments" class="menu-item active" routerLink="/shipments">
+          <span class="menu-icon">▣</span>
+          <span>Envíos</span>
+        </a>
+        <a *ngIf="canAccessCatalog" class="menu-item" routerLink="/catalog">
+          <span class="menu-icon">◇</span>
+          <span>Catálogo</span>
+        </a>
+        <a *ngIf="canAccessReports" class="menu-item" routerLink="/reportes">
+          <span class="menu-icon">▤</span>
+          <span>Reportes</span>
+        </a>
+        <a *ngIf="canAccessAudit" class="menu-item" routerLink="/auditoria">
+          <span class="menu-icon">◈</span>
+          <span>Auditoría</span>
+        </a>
+      </nav>
     </div>
 
-    <nav class="menu">
-      <p class="menu-title">MENÚ</p>
-      <a class="menu-item" routerLink="/dashboard">
-        <span class="menu-icon">⌂</span>
-        <span>Inicio</span>
-      </a>
-      <a *ngIf="canAccessShipments" class="menu-item active" routerLink="/shipments">
-        <span class="menu-icon">▣</span>
-        <span>Envíos</span>
-      </a>
-      <a *ngIf="canAccessCatalog" class="menu-item" routerLink="/catalog">
-        <span class="menu-icon">◇</span>
-        <span>Catálogo</span>
-      </a>
-      <a *ngIf="canAccessReports" class="menu-item" routerLink="/reportes">
-        <span class="menu-icon">▤</span>
-        <span>Reportes</span>
-      </a>
-      <a *ngIf="canAccessAudit" class="menu-item" routerLink="/auditoria">
-        <span class="menu-icon">◈</span>
-        <span>Auditoría</span>
-      </a>
-    </nav>
+    <div style="padding-top: 20px;">
+      <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; gap: 12px; align-items: flex-start;">
+        <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+          ▣
+        </div>
+        <div>
+          <strong style="display: block; color: #ffffff; font-size: 13px; margin-bottom: 4px;">
+            Gestión de envíos
+          </strong>
+          <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">
+            Registra pedidos, revisa trazabilidad y actualiza estados operativos.
+          </p>
+        </div>
+      </div>
+    </div>
   </aside>
 
   <!-- CONTENIDO -->
@@ -324,12 +342,12 @@
           >
             <option
               *ngFor="let service of catalogServices"
-              [value]="service.id"
+              [ngValue]="service.id"
             >
-              {{ service.nombre || service.name }} - {{ service.tiempoEntrega || service.deliveryTime || 'Estándar' }} (Tarifa: ${{ service.tarifa || service.fare || 0 }})
+              {{ service.nombre || service.name }} - {{ service.tiempoEntrega || service.deliveryTime || 'Estándar' }} (Tarifa: ${{ service.tarifa ?? service.price ?? service.fare ?? 0 }})
             </option>
-            <option *ngIf="catalogServices.length === 0" [value]="1">
-              Servicio Estándar #1
+            <option *ngIf="catalogServices.length === 0" [ngValue]="1">
+              Estándar - 3 a 5 días (Tarifa: $4990)
             </option>
           </select>
         </div>

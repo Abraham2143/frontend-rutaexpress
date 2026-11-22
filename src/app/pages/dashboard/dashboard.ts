@@ -28,6 +28,7 @@ import { CatalogService } from '../../service/catalog.service';
 })
 export class Dashboard implements OnInit {
   private readonly DELETED_STORAGE_KEY = 'rutaexpress_deleted_shipments';
+  private readonly CATALOG_OVERRIDES_KEY = 'rutaexpress_catalog_overrides';
 
   userName = 'Usuario';
   userEmail = '';
@@ -36,6 +37,9 @@ export class Dashboard implements OnInit {
   shipments: ShipmentResponse[] = [];
   catalogServices: any[] = [];
   loadingShipments = false;
+
+  showHelpModal = false;
+  copiedAdminEmail = false;
 
   constructor(
     private authService: MsalService,
@@ -55,33 +59,29 @@ export class Dashboard implements OnInit {
       this.userName = account.name ?? 'Usuario';
       this.userEmail = account.username ?? '';
       this.userInitial = this.userName.charAt(0).toUpperCase();
-
-      const claims = account.idTokenClaims as
-        | {
-            name?: string;
-            preferred_username?: string;
-            tid?: string;
-            aud?: string;
-            roles?: string[];
-          }
-        | undefined;
-
-      console.log('Claims de Microsoft:', {
-        name: claims?.name,
-        username: claims?.preferred_username,
-        tenant: claims?.tid,
-        audience: claims?.aud,
-        roles: claims?.roles
-      });
-
-      console.log(
-        'Roles válidos de RutaExpress:',
-        this.roleService.getAssignedRoles()
-      );
     }
 
     this.loadCatalogServices();
     this.loadShipments();
+  }
+
+  /* =========================
+     MODAL AYUDA ADMINISTRADOR
+  ========================== */
+  openHelpModal(): void {
+    this.copiedAdminEmail = false;
+    this.showHelpModal = true;
+  }
+
+  closeHelpModal(): void {
+    this.showHelpModal = false;
+  }
+
+  copyAdminEmail(): void {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText('ab.neira@duocuc.cl');
+      this.copiedAdminEmail = true;
+    }
   }
 
   /* =========================
@@ -96,20 +96,32 @@ export class Dashboard implements OnInit {
     }
   }
 
+  private applyCatalogOverrides(services: any[]): any[] {
+    try {
+      const raw = localStorage.getItem(this.CATALOG_OVERRIDES_KEY);
+      if (!raw) return services;
+      const overrides = JSON.parse(raw) as Record<string, any>;
+      return services.map(s => (overrides[s.id] ? { ...s, ...overrides[s.id] } : s));
+    } catch {
+      return services;
+    }
+  }
+
   loadCatalogServices(): void {
     const fallbackServices = [
-      { id: 1, nombre: 'Envío Express 24h', name: 'Envío Express 24h' },
-      { id: 2, nombre: 'Envío Estándar Nacional', name: 'Envío Estándar Nacional' },
-      { id: 3, nombre: 'Envío Prioritario Bodega', name: 'Envío Prioritario Bodega' }
+      { id: 1, nombre: 'Estándar', name: 'Estándar' },
+      { id: 2, nombre: 'Express', name: 'Express' },
+      { id: 3, nombre: 'Same Day', name: 'Same Day' }
     ];
 
     this.catalogService.getServices().subscribe({
       next: (services: any[]) => {
-        this.catalogServices = services && services.length > 0 ? services : fallbackServices;
+        const base = services && services.length > 0 ? services : fallbackServices;
+        this.catalogServices = this.applyCatalogOverrides(base);
         this.changeDetector.detectChanges();
       },
       error: () => {
-        this.catalogServices = fallbackServices;
+        this.catalogServices = this.applyCatalogOverrides(fallbackServices);
         this.changeDetector.detectChanges();
       }
     });
@@ -259,12 +271,16 @@ export class Dashboard implements OnInit {
   ========================== */
   logout(): void {
     const deletedBackup = localStorage.getItem(this.DELETED_STORAGE_KEY);
+    const catalogBackup = localStorage.getItem(this.CATALOG_OVERRIDES_KEY);
 
     sessionStorage.clear();
     localStorage.clear();
 
     if (deletedBackup) {
       localStorage.setItem(this.DELETED_STORAGE_KEY, deletedBackup);
+    }
+    if (catalogBackup) {
+      localStorage.setItem(this.CATALOG_OVERRIDES_KEY, catalogBackup);
     }
 
     const activeAccount =

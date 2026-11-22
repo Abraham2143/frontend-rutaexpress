@@ -129,7 +129,7 @@
       <div class="help-card">
 
         <div class="help-icon">
-          ?
+          ◇
         </div>
 
         <div>
@@ -139,7 +139,7 @@
           </strong>
 
           <p>
-            Consulta las tarifas y capacidad disponible.
+            Consulta y administra tarifas, tiempos y capacidad disponible.
           </p>
 
         </div>
@@ -184,40 +184,6 @@
     ====================================================== -->
 
     <section class="catalog-content">
-
-
-      <!-- =====================================================
-           ROL REAL
-      ====================================================== -->
-
-      <div class="access-card">
-
-        <div>
-
-          <strong>
-            Acceso al catálogo
-          </strong>
-
-          <p>
-            Rol obtenido desde Microsoft Entra ID.
-          </p>
-
-        </div>
-
-
-        <div class="role-info">
-
-          <span>
-            Usuario autenticado como
-          </span>
-
-          <strong>
-            {{ roleName }}
-          </strong>
-
-        </div>
-
-      </div>
 
 
       <!-- =====================================================
@@ -396,20 +362,31 @@
               </div>
 
 
-              <span
-                class="status active"
-                *ngIf="service.status === 'Activo'"
-              >
-                Activo
-              </span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span
+                  class="status active"
+                  *ngIf="service.status === 'Activo'"
+                >
+                  Activo
+                </span>
 
+                <span
+                  class="status inactive"
+                  *ngIf="service.status === 'Inactivo'"
+                >
+                  Inactivo
+                </span>
 
-              <span
-                class="status inactive"
-                *ngIf="service.status === 'Inactivo'"
-              >
-                Inactivo
-              </span>
+                <button
+                  *ngIf="isAdmin"
+                  type="button"
+                  (click)="openEditModal(service)"
+                  style="padding: 5px 10px; border-radius: 8px; border: 1px solid #cbd5e1; background: #f8fafc; color: #1e293b; font-size: 12px; font-weight: 600; cursor: pointer;"
+                  title="Modificar parámetros de este servicio"
+                >
+                  Editar
+                </button>
+              </div>
 
             </div>
 
@@ -600,5 +577,141 @@
     </section>
 
   </main>
+
+
+  <!-- =====================================================
+       MODAL EDITAR SERVICIO (ADMINISTRADOR)
+  ====================================================== -->
+  <div
+    *ngIf="showEditModal && editingService"
+    (click)="closeEditModal()"
+    style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;"
+  >
+    <div
+      (click)="$event.stopPropagation()"
+      style="background: #ffffff; border-radius: 16px; max-width: 480px; width: 100%; padding: 24px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);"
+    >
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div>
+          <h3 style="margin: 0 0 4px; font-size: 18px; color: #0f172a;">
+            Editar Servicio {{ editingService.id }}
+          </h3>
+          <p style="margin: 0; font-size: 13px; color: #64748b;">
+            Los cambios se reflejarán en el catálogo y en el registro de nuevos envíos.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="closeEditModal()"
+          style="background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer; line-height: 1;"
+        >
+          ×
+        </button>
+      </div>
+
+      <form (ngSubmit)="saveServiceChanges()" style="display: flex; flex-direction: column; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+            Nombre del servicio
+          </label>
+          <input
+            type="text"
+            name="editName"
+            [(ngModel)]="editingService.name"
+            required
+            style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+            Descripción
+          </label>
+          <input
+            type="text"
+            name="editDescription"
+            [(ngModel)]="editingService.description"
+            style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;"
+          />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+              Tiempo de entrega
+            </label>
+            <input
+              type="text"
+              name="editDeliveryTime"
+              [(ngModel)]="editingService.deliveryTime"
+              placeholder="Ej: 24 horas"
+              required
+              style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;"
+            />
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+              Tarifa (CLP)
+            </label>
+            <input
+              type="number"
+              name="editPrice"
+              min="0"
+              [(ngModel)]="editingService.price"
+              required
+              style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;"
+            />
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+              Capacidad disponible
+            </label>
+            <input
+              type="number"
+              name="editCapacity"
+              min="0"
+              [(ngModel)]="editingService.capacity"
+              required
+              style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;"
+            />
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+              Estado
+            </label>
+            <select
+              name="editStatus"
+              [(ngModel)]="editingService.status"
+              style="width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box;"
+            >
+              <option value="Activo">Activo</option>
+              <option value="Inactivo">Inactivo</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 8px;">
+          <button
+            type="button"
+            (click)="closeEditModal()"
+            style="padding: 9px 16px; border-radius: 10px; border: 1px solid #cbd5e1; background: #ffffff; color: #334155; font-weight: 600; cursor: pointer;"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            style="padding: 9px 16px; border-radius: 10px; border: none; background: #2563eb; color: #ffffff; font-weight: 600; cursor: pointer;"
+          >
+            Guardar cambios
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
 </div>

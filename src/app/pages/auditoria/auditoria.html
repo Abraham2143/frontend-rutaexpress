@@ -38,17 +38,12 @@
 
     <div class="sidebar-bottom">
       <div class="help-card">
-        <div class="help-icon">?</div>
+        <div class="help-icon">◈</div>
         <div>
-          <strong>¿Necesitas ayuda?</strong>
-          <p>Contacta al administrador del sistema.</p>
+          <strong>Auditoría del sistema</strong>
+          <p>Supervisa tópicos Kafka y bitácora de trazabilidad de envíos.</p>
         </div>
       </div>
-
-      <button class="logout-button" type="button" (click)="logout()">
-        <span>↪</span>
-        Cerrar sesión
-      </button>
     </div>
   </aside>
 
@@ -80,7 +75,7 @@
               Crea, lista y elimina tópicos en el clúster <strong>rutaexpress-kafka</strong>.
             </p>
             <p *ngIf="!canManageTopics">
-              Vista en <strong>modo solo lectura (Rol Auditor)</strong>. Solo el Administrador puede crear o eliminar tópicos.
+              Consulta de tópicos activos en el clúster <strong>rutaexpress-kafka</strong>.
             </p>
           </div>
         </div>

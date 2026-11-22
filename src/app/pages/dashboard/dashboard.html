@@ -32,7 +32,7 @@
         </span>
       </a>
 
-      <!-- ENVÍOS (ADMIN, DESPACHADOR, CLIENTE) -->
+      <!-- ENVÍOS -->
       <a
         *ngIf="canAccessShipments"
         class="menu-item"
@@ -46,7 +46,7 @@
         </span>
       </a>
 
-      <!-- CATÁLOGO (ADMIN, DESPACHADOR) -->
+      <!-- CATÁLOGO -->
       <a
         *ngIf="canAccessCatalog"
         class="menu-item"
@@ -60,7 +60,7 @@
         </span>
       </a>
 
-      <!-- REPORTES (SOLO ADMIN) -->
+      <!-- REPORTES -->
       <a
         *ngIf="canAccessReports"
         class="menu-item"
@@ -74,7 +74,7 @@
         </span>
       </a>
 
-      <!-- AUDITORÍA (ADMIN, AUDITOR) -->
+      <!-- AUDITORÍA -->
       <a
         *ngIf="canAccessAudit"
         class="menu-item"
@@ -94,7 +94,12 @@
     ====================================================== -->
     <div class="sidebar-bottom">
 
-      <div class="help-card">
+      <div
+        class="help-card"
+        (click)="openHelpModal()"
+        style="cursor: pointer;"
+        title="Haz clic para ver los datos de contacto del administrador"
+      >
         <div class="help-icon">
           ?
         </div>
@@ -142,7 +147,7 @@
         </h1>
       </div>
 
-      <!-- USUARIO MICROSOFT -->
+      <!-- USUARIO -->
       <div class="user-area">
         <div class="user-text">
           <strong>
@@ -165,7 +170,7 @@
     <section class="dashboard-content">
 
       <!-- =====================================================
-           ROLES REALES DE MICROSOFT ENTRA
+           SELECTOR DE ROL
       ====================================================== -->
       <div class="role-selector">
         <div>
@@ -174,13 +179,11 @@
           </strong>
 
           <p *ngIf="hasMultipleRoles">
-            Selecciona uno de los roles asignados a tu cuenta
-            en Microsoft Entra.
+            Selecciona el rol con el que deseas operar en la plataforma.
           </p>
 
           <p *ngIf="!hasMultipleRoles && currentRole">
-            Este rol fue asignado a tu cuenta mediante
-            Microsoft Entra.
+            Rol asignado a tu cuenta en RutaExpress.
           </p>
 
           <p *ngIf="!currentRole">
@@ -743,13 +746,13 @@
       </ng-container>
 
       <!-- =====================================================
-           AUDITOR (SOLO LECTURA)
+           AUDITOR
       ====================================================== -->
       <ng-container *ngIf="isAuditor">
 
         <div class="section-role-title">
           <span class="role-badge admin">
-            AUDITOR · SOLO LECTURA
+            AUDITOR
           </span>
           <h3>
             Control y trazabilidad
@@ -786,5 +789,59 @@
     </section>
 
   </main>
+
+  <!-- =====================================================
+       MODAL CONTACTO ADMINISTRADOR
+  ====================================================== -->
+  <div
+    *ngIf="showHelpModal"
+    (click)="closeHelpModal()"
+    style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 16px;"
+  >
+    <div
+      (click)="$event.stopPropagation()"
+      style="background: #ffffff; border-radius: 16px; max-width: 440px; width: 100%; padding: 24px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);"
+    >
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+        <div>
+          <h3 style="margin: 0 0 4px; font-size: 18px; color: #0f172a;">Soporte y Administración</h3>
+          <p style="margin: 0; font-size: 13px; color: #64748b;">Contacto directo del administrador de RutaExpress.</p>
+        </div>
+        <button
+          type="button"
+          (click)="closeHelpModal()"
+          style="background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer; line-height: 1;"
+        >
+          ×
+        </button>
+      </div>
+
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+        <p style="margin: 0 0 6px; font-size: 13px; color: #475569;">
+          <strong>Administrador:</strong> Abraham Neira Ampuero
+        </p>
+        <p style="margin: 0; font-size: 13px; color: #475569;">
+          <strong>Correo de soporte:</strong> ab.neira@duocuc.cl
+        </p>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="copyAdminEmail()"
+        >
+          {{ copiedAdminEmail ? '✓ Correo copiado' : 'Copiar correo' }}
+        </button>
+        <a
+          href="mailto:ab.neira@duocuc.cl?subject=Soporte%20RutaExpress"
+          class="primary-button"
+          style="text-decoration: none;"
+        >
+          Enviar correo
+        </a>
+      </div>
+    </div>
+  </div>
 
 </div>

@@ -35,6 +35,7 @@ export interface ProcessStep {
 })
 export class Shipments implements OnInit {
   private readonly DELETED_STORAGE_KEY = 'rutaexpress_deleted_shipments';
+  private readonly CATALOG_OVERRIDES_KEY = 'rutaexpress_catalog_overrides';
 
   /* =====================================================
      DATOS
@@ -165,6 +166,17 @@ export class Shipments implements OnInit {
     }
   }
 
+  private applyCatalogOverrides(services: any[]): any[] {
+    try {
+      const raw = localStorage.getItem(this.CATALOG_OVERRIDES_KEY);
+      if (!raw) return services;
+      const overrides = JSON.parse(raw) as Record<string, any>;
+      return services.map(s => (overrides[s.id] ? { ...s, ...overrides[s.id] } : s));
+    } catch {
+      return services;
+    }
+  }
+
   /* =====================================================
      VALIDACIÓN DE ID DUPLICADO
   ===================================================== */
@@ -180,22 +192,19 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
-     CARGAR SERVICIOS DEL CATÁLOGO
+     CARGAR SERVICIOS DEL CATÁLOGO (CON CAMBIOS DEL ADMIN)
   ===================================================== */
   loadCatalogServices(): void {
     const fallbackServices = [
-      { id: 1, nombre: 'Envío Express 24h', name: 'Envío Express 24h', tiempoEntrega: '24 horas', deliveryTime: '24 horas', tarifa: 4990, fare: 4990 },
-      { id: 2, nombre: 'Envío Estándar Nacional', name: 'Envío Estándar Nacional', tiempoEntrega: '48 a 72 horas', deliveryTime: '48 a 72 horas', tarifa: 2990, fare: 2990 },
-      { id: 3, nombre: 'Envío Prioritario Bodega', name: 'Envío Prioritario Bodega', tiempoEntrega: '12 horas', deliveryTime: '12 horas', tarifa: 7990, fare: 7990 }
+      { id: 1, nombre: 'Estándar', name: 'Estándar', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 4990, fare: 4990, price: 4990 },
+      { id: 2, nombre: 'Express', name: 'Express', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 7990, fare: 7990, price: 7990 },
+      { id: 3, nombre: 'Same Day', name: 'Same Day', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 11990, fare: 11990, price: 11990 }
     ];
 
     this.catalogService.getServices().subscribe({
       next: (services: any[]) => {
-        if (services && services.length > 0) {
-          this.catalogServices = services;
-        } else {
-          this.catalogServices = fallbackServices;
-        }
+        const base = services && services.length > 0 ? services : fallbackServices;
+        this.catalogServices = this.applyCatalogOverrides(base);
 
         if (this.catalogServices.length > 0 && this.catalogServices[0].id) {
           this.newShipment.servicioId = this.catalogServices[0].id;
@@ -204,8 +213,8 @@ export class Shipments implements OnInit {
       },
       error: (error) => {
         console.error('Error cargando servicios del catálogo, usando fallback:', error);
-        this.catalogServices = fallbackServices;
-        this.newShipment.servicioId = fallbackServices[0].id;
+        this.catalogServices = this.applyCatalogOverrides(fallbackServices);
+        this.newShipment.servicioId = this.catalogServices[0].id;
         this.changeDetector.detectChanges();
       }
     });
@@ -308,6 +317,7 @@ export class Shipments implements OnInit {
   ===================================================== */
   openModal(): void {
     if (!this.canCreateShipment) return;
+    this.catalogServices = this.applyCatalogOverrides(this.catalogServices);
     this.errorMessage = '';
     this.showModal = true;
   }
@@ -339,7 +349,8 @@ export class Shipments implements OnInit {
 
     const payload: CreateShipmentRequest = {
       ...this.newShipment,
-      clienteId: this.newShipment.clienteId.trim()
+      clienteId: this.newShipment.clienteId.trim(),
+      servicioId: Number(this.newShipment.servicioId)
     };
 
     this.saving = true;
