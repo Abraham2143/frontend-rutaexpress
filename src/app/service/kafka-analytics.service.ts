@@ -103,11 +103,11 @@ export class KafkaAnalyticsService {
     );
   }
 
-  createTopic(name: string, partitions = 1): Observable<unknown> {
+  createTopic(name: string, partitions = 1, replicationFactor = 1): Observable<unknown> {
     const body: CreateTopicRequest = {
       name,
       partitions,
-      replicationFactor: 1
+      replicationFactor
     };
     return this.http.post(`${this.kafkaUrl}/topics`, body);
   }

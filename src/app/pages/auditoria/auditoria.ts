@@ -21,11 +21,14 @@ export class Auditoria implements OnInit {
   loadingTopics = false;
   loadingEvents = false;
   savingTopic = false;
+  mostrarModalCrear = false;
   errorMessage = '';
+  modalErrorMessage = '';
 
   nuevoTopico = {
     nombre: '',
-    particiones: 1
+    particiones: 1,
+    replicacion: 1
   };
 
   topicos: KafkaTopicItem[] = [];
@@ -99,7 +102,6 @@ export class Auditoria implements OnInit {
   private formatearFecha(raw: string): string {
     if (!raw || raw === '-') return '-';
 
-    // Recorta nanosegundos a milisegundos para asegurar compatibilidad al parsear ISO UTC
     const normalized = raw.replace(/(\.\d{3})\d+Z$/, '$1Z');
     const date = new Date(normalized);
 
@@ -134,55 +136,52 @@ export class Auditoria implements OnInit {
     return this.roleService.canManageTopics();
   }
 
-  esTopicoProtegido(nombre: string): boolean {
-    const protegidos = [
-      'rutaexpress.shipments.events.v1',
-      'rutaexpress.shipments.analytics.v1',
-      'rutaexpress.shipments.events.v1.DLT',
-      'rutaexpress.shipments.analytics.v1.DLT'
-    ];
-    return protegidos.includes(nombre) || nombre.endsWith('.DLT');
+  abrirModalCrear(): void {
+    if (!this.canManageTopics) return;
+    this.nuevoTopico = {
+      nombre: '',
+      particiones: 1,
+      replicacion: 1
+    };
+    this.modalErrorMessage = '';
+    this.mostrarModalCrear = true;
+  }
+
+  cerrarModalCrear(): void {
+    if (this.savingTopic) return;
+    this.mostrarModalCrear = false;
+    this.modalErrorMessage = '';
   }
 
   crearTopico(): void {
     const nombre = this.nuevoTopico.nombre.trim();
-    if (!this.canManageTopics || !nombre || this.savingTopic) return;
+    const particiones = Number(this.nuevoTopico.particiones) || 1;
+    const replicacion = Number(this.nuevoTopico.replicacion) || 1;
+
+    if (!this.canManageTopics || this.savingTopic) return;
+
+    if (!nombre) {
+      this.modalErrorMessage = 'Ingresa el nombre del tópico.';
+      return;
+    }
 
     this.savingTopic = true;
+    this.modalErrorMessage = '';
     this.errorMessage = '';
 
-    this.kafkaService.createTopic(nombre, this.nuevoTopico.particiones || 1).subscribe({
+    this.kafkaService.createTopic(nombre, particiones, replicacion).subscribe({
       next: () => {
-        this.nuevoTopico.nombre = '';
-        this.nuevoTopico.particiones = 1;
         this.savingTopic = false;
+        this.mostrarModalCrear = false;
+        this.nuevoTopico = { nombre: '', particiones: 1, replicacion: 1 };
         this.cargarTopicos();
       },
       error: (err) => {
         console.error('Error creando tópico:', err);
-        this.errorMessage = err?.error?.message || 'No se pudo crear el tópico en Kafka.';
+        this.modalErrorMessage =
+          err?.error?.message ||
+          'No se pudo crear el tópico en Kafka (verifica que la replicación no supere los brokers activos).';
         this.savingTopic = false;
-        this.cdr.detectChanges();
-      }
-    });
-  }
-
-  eliminarTopico(nombre: string): void {
-    if (!this.canManageTopics || this.esTopicoProtegido(nombre)) return;
-
-    this.errorMessage = '';
-    this.kafkaService.deleteTopic(nombre).subscribe({
-      next: () => {
-        this.cargarTopicos();
-      },
-      error: (err) => {
-        console.error('Error eliminando tópico:', err);
-        if (err?.status === 409) {
-          this.errorMessage =
-            'Este tópico está protegido por el sistema y solo puede administrarse directamente desde Apache Kafka.';
-        } else {
-          this.errorMessage = err?.error?.message || `No se pudo eliminar el tópico ${nombre}.`;
-        }
         this.cdr.detectChanges();
       }
     });

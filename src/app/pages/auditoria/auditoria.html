@@ -70,48 +70,31 @@
         {{ errorMessage }}
       </p>
 
-      <!-- ADMINISTRACIÓN DE TÓPICOS -->
+      <!-- TÓPICOS DEL CLÚSTER KAFKA -->
       <section class="shipments-card" style="margin-bottom: 24px;">
         <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
           <div>
             <h3>Tópicos del clúster Kafka</h3>
-            <p *ngIf="canManageTopics">
-              Crea, lista y elimina tópicos personalizados en <strong>rutaexpress-kafka</strong>. Los tópicos base del sistema están protegidos y solo se administran desde Apache Kafka.
-            </p>
-            <p *ngIf="!canManageTopics">
-              Consulta de tópicos activos en el clúster <strong>rutaexpress-kafka</strong>.
+            <p>
+              Consulta y creación de tópicos en <strong>rutaexpress-kafka</strong>. La eliminación se gestiona únicamente desde Apache Kafka.
             </p>
           </div>
 
-          <button class="secondary-button" type="button" (click)="cargarTopicos()" [disabled]="loadingTopics">
-            {{ loadingTopics ? 'Cargando...' : '↻ Refrescar' }}
-          </button>
-        </div>
+          <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button class="secondary-button" type="button" (click)="cargarTopicos()" [disabled]="loadingTopics">
+              {{ loadingTopics ? 'Cargando...' : '↻ Refrescar' }}
+            </button>
 
-        <!-- FORMULARIO SOLO PARA ADMINISTRADOR -->
-        <div *ngIf="canManageTopics" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px;">
-          <input
-            type="text"
-            [(ngModel)]="nuevoTopico.nombre"
-            placeholder="Ej: rutaexpress.audit.events.v1"
-            style="flex: 1; min-width: 240px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px;"
-          />
-          <input
-            type="number"
-            min="1"
-            max="10"
-            [(ngModel)]="nuevoTopico.particiones"
-            style="width: 110px; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px;"
-          />
-          <button
-            class="primary-button"
-            type="button"
-            (click)="crearTopico()"
-            [disabled]="savingTopic"
-          >
-            <span>＋</span>
-            {{ savingTopic ? 'Creando...' : 'Crear tópico' }}
-          </button>
+            <button
+              *ngIf="canManageTopics"
+              class="primary-button"
+              type="button"
+              (click)="abrirModalCrear()"
+            >
+              <span>＋</span>
+              Crear tópico
+            </button>
+          </div>
         </div>
 
         <div class="table-container">
@@ -121,7 +104,6 @@
                 <th>TÓPICO</th>
                 <th>PARTICIONES</th>
                 <th>REPLICACIÓN</th>
-                <th *ngIf="canManageTopics">ACCIÓN</th>
               </tr>
             </thead>
             <tbody>
@@ -129,29 +111,10 @@
                 <td class="shipment-id">{{ t.nombre }}</td>
                 <td>{{ t.particiones }}</td>
                 <td>{{ t.replicacion }}</td>
-                <td *ngIf="canManageTopics">
-                  <button
-                    *ngIf="!esTopicoProtegido(t.nombre); else protegidoBadge"
-                    class="secondary-button"
-                    type="button"
-                    style="color: #dc2626; border-color: #fecaca;"
-                    (click)="eliminarTopico(t.nombre)"
-                  >
-                    Eliminar
-                  </button>
-                  <ng-template #protegidoBadge>
-                    <span
-                      title="Tópico troncal del sistema: solo puede gestionarse directamente desde Apache Kafka"
-                      style="display: inline-block; padding: 4px 10px; border-radius: 999px; background-color: #f1f5f9; color: #475569; font-size: 0.82rem; font-weight: 600;"
-                    >
-                      Protegido (solo Apache Kafka)
-                    </span>
-                  </ng-template>
-                </td>
               </tr>
 
               <tr *ngIf="topicos.length === 0 && !loadingTopics">
-                <td [attr.colspan]="canManageTopics ? 4 : 3" style="text-align: center; color: #64748b; padding: 18px;">
+                <td colspan="3" style="text-align: center; color: #64748b; padding: 18px;">
                   No se encontraron tópicos activos en el clúster.
                 </td>
               </tr>
@@ -203,5 +166,103 @@
 
     </section>
   </main>
+
+  <!-- MODAL CREAR TÓPICO -->
+  <div
+    *ngIf="mostrarModalCrear && canManageTopics"
+    (click)="cerrarModalCrear()"
+    style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.55); display: flex; align-items: center; justify-content: center; padding: 20px; z-index: 1000;"
+  >
+    <div
+      (click)="$event.stopPropagation()"
+      style="background: #ffffff; border-radius: 16px; width: 100%; max-width: 480px; padding: 24px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);"
+    >
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <div>
+          <h3 style="margin: 0; font-size: 1.15rem; color: #0f172a;">Nuevo tópico en Apache Kafka</h3>
+          <p style="margin: 4px 0 0; font-size: 0.88rem; color: #64748b;">
+            Define la configuración básica del tópico en el clúster.
+          </p>
+        </div>
+        <button
+          type="button"
+          (click)="cerrarModalCrear()"
+          style="background: transparent; border: none; font-size: 1.2rem; color: #64748b; cursor: pointer;"
+        >
+          ✕
+        </button>
+      </div>
+
+      <p *ngIf="modalErrorMessage" style="color: #dc2626; font-size: 0.88rem; margin-bottom: 12px;">
+        {{ modalErrorMessage }}
+      </p>
+
+      <div style="display: flex; flex-direction: column; gap: 14px;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+            Nombre del tópico *
+          </label>
+          <input
+            type="text"
+            [(ngModel)]="nuevoTopico.nombre"
+            placeholder="Ej: rutaexpress.audit.events.v1"
+            style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem;"
+          />
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Número de particiones *
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              [(ngModel)]="nuevoTopico.particiones"
+              style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem;"
+            />
+          </div>
+
+          <div>
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 6px;">
+              Factor de replicación *
+            </label>
+            <input
+              type="number"
+              min="1"
+              max="3"
+              [(ngModel)]="nuevoTopico.replicacion"
+              style="width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.95rem;"
+            />
+          </div>
+        </div>
+
+        <p style="margin: 0; font-size: 0.8rem; color: #64748b;">
+          Nota: El clúster actual cuenta con 1 broker activo (replicación máxima = 1).
+        </p>
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="cerrarModalCrear()"
+          [disabled]="savingTopic"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="primary-button"
+          type="button"
+          (click)="crearTopico()"
+          [disabled]="savingTopic"
+        >
+          {{ savingTopic ? 'Creando...' : 'Crear tópico' }}
+        </button>
+      </div>
+    </div>
+  </div>
 
 </div>
