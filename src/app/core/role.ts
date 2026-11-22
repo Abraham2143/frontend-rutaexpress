@@ -14,7 +14,8 @@ import {
 export type UserRole =
   | 'ADMIN'
   | 'DISPATCHER'
-  | 'CLIENT';
+  | 'CLIENT'
+  | 'AUDITOR';
 
 
 @Injectable({
@@ -41,7 +42,8 @@ export class RoleService {
     const validRoles: UserRole[] = [
       'ADMIN',
       'DISPATCHER',
-      'CLIENT'
+      'CLIENT',
+      'AUDITOR'
     ];
 
     const account =
@@ -97,7 +99,8 @@ export class RoleService {
     if (
       storedRole === 'ADMIN' ||
       storedRole === 'DISPATCHER' ||
-      storedRole === 'CLIENT'
+      storedRole === 'CLIENT' ||
+      storedRole === 'AUDITOR'
     ) {
 
       if (assignedRoles.includes(storedRole)) {
@@ -188,9 +191,25 @@ export class RoleService {
   }
 
 
+  isAuditor(): boolean {
+
+    return this.getRole() === 'AUDITOR';
+
+  }
+
+
   /* =====================================================
-     PERMISOS
+     PERMISOS POR MÓDULO Y ACCIÓN
   ====================================================== */
+
+  canAccessShipments(): boolean {
+
+    const role = this.getRole();
+
+    return role === 'ADMIN' || role === 'DISPATCHER' || role === 'CLIENT';
+
+  }
+
 
   canCreateShipment(): boolean {
 
@@ -212,7 +231,32 @@ export class RoleService {
 
   canAccessCatalog(): boolean {
 
-    return true; // Permitir acceso al catálogo a todos los usuarios autenticados
+    const role = this.getRole();
+
+    return role === 'ADMIN' || role === 'DISPATCHER';
+
+  }
+
+
+  canAccessReports(): boolean {
+
+    return this.getRole() === 'ADMIN';
+
+  }
+
+
+  canAccessAudit(): boolean {
+
+    const role = this.getRole();
+
+    return role === 'ADMIN' || role === 'AUDITOR';
+
+  }
+
+
+  canManageTopics(): boolean {
+
+    return this.getRole() === 'ADMIN';
 
   }
 

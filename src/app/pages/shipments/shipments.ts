@@ -248,6 +248,7 @@ export class Shipments implements OnInit {
   get roleName(): string {
     if (this.currentRole === 'ADMIN') return 'Administrador';
     if (this.currentRole === 'DISPATCHER') return 'Despachador';
+    if (this.currentRole === 'AUDITOR') return 'Auditor';
     return 'Cliente';
   }
 
@@ -259,8 +260,20 @@ export class Shipments implements OnInit {
     return this.roleService.canChangeShipmentStatus();
   }
 
+  get canAccessShipments(): boolean {
+    return this.roleService.canAccessShipments();
+  }
+
   get canAccessCatalog(): boolean {
     return this.roleService.canAccessCatalog();
+  }
+
+  get canAccessReports(): boolean {
+    return this.roleService.canAccessReports();
+  }
+
+  get canAccessAudit(): boolean {
+    return this.roleService.canAccessAudit();
   }
 
   get activeShipmentsCount(): number {

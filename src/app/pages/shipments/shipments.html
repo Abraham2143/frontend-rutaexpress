@@ -12,7 +12,7 @@
         <span class="menu-icon">⌂</span>
         <span>Inicio</span>
       </a>
-      <a class="menu-item active" routerLink="/shipments">
+      <a *ngIf="canAccessShipments" class="menu-item active" routerLink="/shipments">
         <span class="menu-icon">▣</span>
         <span>Envíos</span>
       </a>
@@ -20,11 +20,11 @@
         <span class="menu-icon">◇</span>
         <span>Catálogo</span>
       </a>
-      <a class="menu-item" routerLink="/reportes">
+      <a *ngIf="canAccessReports" class="menu-item" routerLink="/reportes">
         <span class="menu-icon">▤</span>
         <span>Reportes</span>
       </a>
-      <a class="menu-item" routerLink="/auditoria">
+      <a *ngIf="canAccessAudit" class="menu-item" routerLink="/auditoria">
         <span class="menu-icon">◈</span>
         <span>Auditoría</span>
       </a>
