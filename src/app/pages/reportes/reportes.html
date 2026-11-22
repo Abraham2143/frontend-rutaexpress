@@ -65,7 +65,7 @@
     </header>
 
     <section class="dashboard-content">
-      <div class="welcome">
+      <div class="welcome" style="display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
         <div>
           <h2>Métricas de Streaming (Apache Kafka)</h2>
           <p>
@@ -73,7 +73,15 @@
             <strong>rutaexpress.shipments.events.v1</strong>.
           </p>
         </div>
+
+        <button class="secondary-button" type="button" (click)="cargarMetricas()" [disabled]="loading">
+          {{ loading ? 'Actualizando...' : '↻ Actualizar métricas' }}
+        </button>
       </div>
+
+      <p *ngIf="errorMessage" style="color: #dc2626; margin-bottom: 16px;">
+        {{ errorMessage }}
+      </p>
 
       <!-- KPIs -->
       <div class="stats-grid">
@@ -83,7 +91,7 @@
             <div class="stat-icon blue">▣</div>
           </div>
           <strong>{{ resumen.totalEnvios }}</strong>
-          <p>Eventos registrados</p>
+          <p>Eventos registrados ({{ resumen.creados }} creados)</p>
         </article>
 
         <article class="stat-card">
@@ -92,7 +100,7 @@
             <div class="stat-icon orange">◷</div>
           </div>
           <strong>{{ resumen.confirmados }}</strong>
-          <p>Listos para bodega</p>
+          <p>Listos para bodega ({{ resumen.enBodega }} en bodega)</p>
         </article>
 
         <article class="stat-card">
@@ -110,18 +118,39 @@
             <div class="stat-icon green">✓</div>
           </div>
           <strong>{{ resumen.entregados }}</strong>
-          <p>Completados con éxito</p>
+          <p>Completados ({{ resumen.cancelados }} cancelados)</p>
         </article>
       </div>
 
+      <!-- DESGLOSE POR ESTADO DESDE KAFKA ANALYTICS -->
       <section class="shipments-card">
         <div class="card-header">
           <div>
-            <h3>Estado de conexión con microservicio</h3>
-            <p>
-              En espera de desplegar <strong>ms-rutaexpress-report</strong> (puerto 8084) para consumir los datos reales.
-            </p>
+            <h3>Distribución de eventos por estado</h3>
+            <p>Conteo consolidado en tiempo real desde <strong>rutaexpress-kafka-analytics</strong>.</p>
           </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ESTADO DEL ENVÍO</th>
+                <th>CANTIDAD DE EVENTOS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of estadosDetalle">
+                <td class="shipment-id">{{ item.estado }}</td>
+                <td>{{ item.cantidad }}</td>
+              </tr>
+              <tr *ngIf="estadosDetalle.length === 0 && !loading">
+                <td colspan="2" style="text-align: center; color: #64748b; padding: 18px;">
+                  Aún no hay eventos registrados en el consumidor de analítica.
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </section>
     </section>

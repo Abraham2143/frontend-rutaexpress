@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
 import { RoleService } from '../../core/role';
+import { KafkaAnalyticsService, KafkaTopicItem } from '../../service/kafka-analytics.service';
 
 @Component({
   selector: 'app-auditoria',
@@ -17,20 +18,24 @@ export class Auditoria implements OnInit {
   userEmail = '';
   userInitial = 'U';
 
+  loadingTopics = false;
+  loadingEvents = false;
+  savingTopic = false;
+  errorMessage = '';
+
   nuevoTopico = {
     nombre: '',
     particiones: 1
   };
 
-  topicos = [
-    { nombre: 'rutaexpress.shipments.events.v1', particiones: 1, replicacion: 1 }
-  ];
-
+  topicos: KafkaTopicItem[] = [];
   eventos: Array<{ eventId: string; shipmentId: string; estado: string; fecha: string }> = [];
 
   constructor(
     private authService: MsalService,
-    public roleService: RoleService
+    public roleService: RoleService,
+    private kafkaService: KafkaAnalyticsService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
@@ -43,6 +48,47 @@ export class Auditoria implements OnInit {
       this.userEmail = account.username || '';
       this.userInitial = this.userName.charAt(0).toUpperCase();
     }
+
+    this.cargarTopicos();
+    this.cargarEventos();
+  }
+
+  cargarTopicos(): void {
+    this.loadingTopics = true;
+    this.kafkaService.getTopics().subscribe({
+      next: (lista) => {
+        this.topicos = lista.filter((t) => !t.nombre.startsWith('__'));
+        this.loadingTopics = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error listando tópicos Kafka:', err);
+        this.errorMessage = 'No se pudieron cargar los tópicos del clúster Kafka.';
+        this.loadingTopics = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  cargarEventos(): void {
+    this.loadingEvents = true;
+    this.kafkaService.getRecentEvents(20).subscribe({
+      next: (lista) => {
+        this.eventos = (lista ?? []).map((ev, idx) => ({
+          eventId: String(ev.eventId ?? ev.id ?? `EVT-${idx + 1}`),
+          shipmentId: String(ev.trackingNumber ?? ev.shipmentId ?? '-'),
+          estado: String(ev.status ?? ev.newStatus ?? ev.eventType ?? '-'),
+          fecha: String(ev.occurredAt ?? ev.processedAt ?? ev.timestamp ?? ev.createdAt ?? '-')
+        }));
+        this.loadingEvents = false;
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error cargando bitácora de eventos:', err);
+        this.loadingEvents = false;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   get canAccessShipments(): boolean {
@@ -66,18 +112,42 @@ export class Auditoria implements OnInit {
   }
 
   crearTopico(): void {
-    if (!this.canManageTopics || !this.nuevoTopico.nombre.trim()) return;
-    this.topicos.push({
-      nombre: this.nuevoTopico.nombre.trim(),
-      particiones: this.nuevoTopico.particiones,
-      replicacion: 1
+    const nombre = this.nuevoTopico.nombre.trim();
+    if (!this.canManageTopics || !nombre || this.savingTopic) return;
+
+    this.savingTopic = true;
+    this.errorMessage = '';
+
+    this.kafkaService.createTopic(nombre, this.nuevoTopico.particiones || 1).subscribe({
+      next: () => {
+        this.nuevoTopico.nombre = '';
+        this.nuevoTopico.particiones = 1;
+        this.savingTopic = false;
+        this.cargarTopicos();
+      },
+      error: (err) => {
+        console.error('Error creando tópico:', err);
+        this.errorMessage = err?.error?.message || 'No se pudo crear el tópico en Kafka.';
+        this.savingTopic = false;
+        this.cdr.detectChanges();
+      }
     });
-    this.nuevoTopico.nombre = '';
   }
 
   eliminarTopico(nombre: string): void {
     if (!this.canManageTopics) return;
-    this.topicos = this.topicos.filter(t => t.nombre !== nombre);
+
+    this.errorMessage = '';
+    this.kafkaService.deleteTopic(nombre).subscribe({
+      next: () => {
+        this.cargarTopicos();
+      },
+      error: (err) => {
+        console.error('Error eliminando tópico:', err);
+        this.errorMessage = err?.error?.message || `No se pudo eliminar el tópico ${nombre}.`;
+        this.cdr.detectChanges();
+      }
+    });
   }
 
   logout(): void {
