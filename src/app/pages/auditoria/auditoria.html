@@ -66,9 +66,13 @@
 
     <section class="dashboard-content">
 
+      <p *ngIf="errorMessage" style="color: #dc2626; margin-bottom: 16px;">
+        {{ errorMessage }}
+      </p>
+
       <!-- ADMINISTRACIÓN DE TÓPICOS -->
       <section class="shipments-card" style="margin-bottom: 24px;">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
           <div>
             <h3>Tópicos del clúster Kafka</h3>
             <p *ngIf="canManageTopics">
@@ -78,6 +82,10 @@
               Consulta de tópicos activos en el clúster <strong>rutaexpress-kafka</strong>.
             </p>
           </div>
+
+          <button class="secondary-button" type="button" (click)="cargarTopicos()" [disabled]="loadingTopics">
+            {{ loadingTopics ? 'Cargando...' : '↻ Refrescar' }}
+          </button>
         </div>
 
         <!-- FORMULARIO SOLO PARA ADMINISTRADOR -->
@@ -99,9 +107,10 @@
             class="primary-button"
             type="button"
             (click)="crearTopico()"
+            [disabled]="savingTopic"
           >
             <span>＋</span>
-            Crear tópico
+            {{ savingTopic ? 'Creando...' : 'Crear tópico' }}
           </button>
         </div>
 
@@ -131,6 +140,12 @@
                   </button>
                 </td>
               </tr>
+
+              <tr *ngIf="topicos.length === 0 && !loadingTopics">
+                <td [attr.colspan]="canManageTopics ? 4 : 3" style="text-align: center; color: #64748b; padding: 18px;">
+                  No se encontraron tópicos activos en el clúster.
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -138,11 +153,15 @@
 
       <!-- BITÁCORA DE AUDITORÍA -->
       <section class="shipments-card">
-        <div class="card-header">
+        <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;">
           <div>
             <h3>Bitácora de eventos auditados</h3>
             <p>Trazabilidad de cambios recibidos desde el tópico de envíos.</p>
           </div>
+
+          <button class="secondary-button" type="button" (click)="cargarEventos()" [disabled]="loadingEvents">
+            {{ loadingEvents ? 'Cargando...' : '↻ Refrescar' }}
+          </button>
         </div>
 
         <div class="table-container">
@@ -163,9 +182,9 @@
                 <td>{{ ev.fecha }}</td>
               </tr>
 
-              <tr *ngIf="eventos.length === 0">
+              <tr *ngIf="eventos.length === 0 && !loadingEvents">
                 <td colspan="4" style="text-align: center; color: #64748b; padding: 18px;">
-                  En espera de conectar <strong>ms-rutaexpress-audit</strong> (puerto 8085) para mostrar los eventos consumidos.
+                  Aún no hay eventos registrados en la bitácora de auditoría.
                 </td>
               </tr>
             </tbody>

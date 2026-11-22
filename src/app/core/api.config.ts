@@ -15,7 +15,13 @@ export const API_CONFIG = {
       '/api/catalog/services',
 
     shipments:
-      '/api/shipments'
+      '/api/shipments',
+
+    analytics:
+      '/api/analytics',
+
+    kafka:
+      '/api/kafka'
 
   }
 
