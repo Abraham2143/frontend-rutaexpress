@@ -363,15 +363,39 @@ export class Shipments implements OnInit {
       return;
     }
 
-    if (
-      !this.newShipment.clienteId.trim() ||
-      !this.newShipment.destinatarioNombre.trim() ||
-      !this.newShipment.destinatarioEmail.trim() ||
-      !this.newShipment.direccionOrigen.trim() ||
-      !this.newShipment.direccionDestino.trim() ||
-      !selectedServiceId
-    ) {
-      this.errorMessage = 'Debes completar todos los campos.';
+    const missingFields: string[] = [];
+    if (!this.newShipment.clienteId.trim()) {
+      missingFields.push('ID del Pedido');
+    }
+    if (!this.newShipment.destinatarioNombre.trim()) {
+      missingFields.push('Destinatario');
+    }
+    if (!this.newShipment.destinatarioEmail.trim()) {
+      missingFields.push('Correo del destinatario');
+    }
+    if (!this.newShipment.direccionOrigen.trim()) {
+      missingFields.push('Dirección de origen');
+    }
+    if (!this.newShipment.direccionDestino.trim()) {
+      missingFields.push('Dirección de destino');
+    }
+    if (!selectedServiceId) {
+      missingFields.push('Tipo de servicio');
+    }
+
+    if (missingFields.length === 1) {
+      this.errorMessage = `Falta completar el campo: ${missingFields[0]}.`;
+      return;
+    }
+
+    if (missingFields.length > 1) {
+      this.errorMessage = `Faltan completar los siguientes campos: ${missingFields.join(', ')}.`;
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.newShipment.destinatarioEmail.trim())) {
+      this.errorMessage = 'Ingresa un correo electrónico válido en el campo "Correo del destinatario".';
       return;
     }
 

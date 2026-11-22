@@ -257,7 +257,7 @@
         </button>
       </div>
 
-      <form (ngSubmit)="createShipment()">
+      <form (ngSubmit)="createShipment()" novalidate>
         <div class="form-group">
           <label for="clienteId">ID del Pedido</label>
           <input
@@ -267,7 +267,6 @@
             [(ngModel)]="newShipment.clienteId"
             placeholder="Ej: PED-007"
             maxlength="100"
-            required
             [style.borderColor]="isDuplicateId ? '#dc2626' : null"
           >
           <small
@@ -287,7 +286,6 @@
             [(ngModel)]="newShipment.destinatarioNombre"
             placeholder="Ej: María González"
             maxlength="150"
-            required
           >
         </div>
 
@@ -300,7 +298,6 @@
             [(ngModel)]="newShipment.destinatarioEmail"
             placeholder="Ej: maria@correo.cl"
             maxlength="254"
-            required
           >
         </div>
 
@@ -313,7 +310,6 @@
             [(ngModel)]="newShipment.direccionOrigen"
             placeholder="Ej: Av. Providencia 1234"
             maxlength="300"
-            required
           >
         </div>
 
@@ -326,7 +322,6 @@
             [(ngModel)]="newShipment.direccionDestino"
             placeholder="Ej: Av. Apoquindo 4500"
             maxlength="300"
-            required
           >
         </div>
 
@@ -337,7 +332,6 @@
             name="servicioId"
             [(ngModel)]="newShipment.servicioId"
             [disabled]="activeCatalogServices.length === 0"
-            required
           >
             <option
               *ngFor="let service of activeCatalogServices"
