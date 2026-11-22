@@ -829,20 +829,6 @@
       <form (ngSubmit)="sendSupportEmail()" novalidate style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px;">
         <div>
           <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
-            Tu correo para respuesta
-          </label>
-          <input
-            type="email"
-            name="supportReplyEmail"
-            [(ngModel)]="supportReplyEmail"
-            [disabled]="sendingSupport"
-            placeholder="ejemplo@correo.cl"
-            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 13px;"
-          />
-        </div>
-
-        <div>
-          <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
             Asunto
           </label>
           <input
