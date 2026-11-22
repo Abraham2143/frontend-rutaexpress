@@ -76,7 +76,7 @@
           <div>
             <h3>Tópicos del clúster Kafka</h3>
             <p *ngIf="canManageTopics">
-              Crea, lista y elimina tópicos en el clúster <strong>rutaexpress-kafka</strong>.
+              Crea, lista y elimina tópicos personalizados en <strong>rutaexpress-kafka</strong>. Los tópicos base del sistema están protegidos y solo se administran desde Apache Kafka.
             </p>
             <p *ngIf="!canManageTopics">
               Consulta de tópicos activos en el clúster <strong>rutaexpress-kafka</strong>.
@@ -131,6 +131,7 @@
                 <td>{{ t.replicacion }}</td>
                 <td *ngIf="canManageTopics">
                   <button
+                    *ngIf="!esTopicoProtegido(t.nombre); else protegidoBadge"
                     class="secondary-button"
                     type="button"
                     style="color: #dc2626; border-color: #fecaca;"
@@ -138,6 +139,14 @@
                   >
                     Eliminar
                   </button>
+                  <ng-template #protegidoBadge>
+                    <span
+                      title="Tópico troncal del sistema: solo puede gestionarse directamente desde Apache Kafka"
+                      style="display: inline-block; padding: 4px 10px; border-radius: 999px; background-color: #f1f5f9; color: #475569; font-size: 0.82rem; font-weight: 600;"
+                    >
+                      Protegido (solo Apache Kafka)
+                    </span>
+                  </ng-template>
                 </td>
               </tr>
 

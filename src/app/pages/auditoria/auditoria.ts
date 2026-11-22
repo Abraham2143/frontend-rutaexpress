@@ -111,6 +111,16 @@ export class Auditoria implements OnInit {
     return this.roleService.canManageTopics();
   }
 
+  esTopicoProtegido(nombre: string): boolean {
+    const protegidos = [
+      'rutaexpress.shipments.events.v1',
+      'rutaexpress.shipments.analytics.v1',
+      'rutaexpress.shipments.events.v1.DLT',
+      'rutaexpress.shipments.analytics.v1.DLT'
+    ];
+    return protegidos.includes(nombre) || nombre.endsWith('.DLT');
+  }
+
   crearTopico(): void {
     const nombre = this.nuevoTopico.nombre.trim();
     if (!this.canManageTopics || !nombre || this.savingTopic) return;
@@ -135,7 +145,7 @@ export class Auditoria implements OnInit {
   }
 
   eliminarTopico(nombre: string): void {
-    if (!this.canManageTopics) return;
+    if (!this.canManageTopics || this.esTopicoProtegido(nombre)) return;
 
     this.errorMessage = '';
     this.kafkaService.deleteTopic(nombre).subscribe({
@@ -144,7 +154,12 @@ export class Auditoria implements OnInit {
       },
       error: (err) => {
         console.error('Error eliminando tópico:', err);
-        this.errorMessage = err?.error?.message || `No se pudo eliminar el tópico ${nombre}.`;
+        if (err?.status === 409) {
+          this.errorMessage =
+            'Este tópico está protegido por el sistema y solo puede administrarse directamente desde Apache Kafka.';
+        } else {
+          this.errorMessage = err?.error?.message || `No se pudo eliminar el tópico ${nombre}.`;
+        }
         this.cdr.detectChanges();
       }
     });
