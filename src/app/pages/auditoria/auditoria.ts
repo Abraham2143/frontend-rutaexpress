@@ -74,12 +74,17 @@ export class Auditoria implements OnInit {
     this.loadingEvents = true;
     this.kafkaService.getRecentEvents(20).subscribe({
       next: (lista) => {
-        this.eventos = (lista ?? []).map((ev, idx) => ({
-          eventId: String(ev.eventId ?? ev.id ?? `EVT-${idx + 1}`),
-          shipmentId: String(ev.trackingNumber ?? ev.shipmentId ?? '-'),
-          estado: String(ev.status ?? ev.newStatus ?? ev.eventType ?? '-'),
-          fecha: String(ev.occurredAt ?? ev.processedAt ?? ev.timestamp ?? ev.createdAt ?? '-')
-        }));
+        this.eventos = (lista ?? []).map((ev, idx) => {
+          const rawFecha = String(
+            ev.occurredAt ?? ev.processedAt ?? ev.timestamp ?? ev.createdAt ?? '-'
+          );
+          return {
+            eventId: String(ev.eventId ?? ev.id ?? `EVT-${idx + 1}`),
+            shipmentId: String(ev.trackingNumber ?? ev.shipmentId ?? '-'),
+            estado: String(ev.status ?? ev.newStatus ?? ev.eventType ?? '-'),
+            fecha: this.formatearFecha(rawFecha)
+          };
+        });
         this.loadingEvents = false;
         this.cdr.detectChanges();
       },
@@ -89,6 +94,24 @@ export class Auditoria implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  private formatearFecha(raw: string): string {
+    if (!raw || raw === '-') return '-';
+
+    // Recorta nanosegundos a milisegundos para asegurar compatibilidad al parsear ISO UTC
+    const normalized = raw.replace(/(\.\d{3})\d+Z$/, '$1Z');
+    const date = new Date(normalized);
+
+    if (isNaN(date.getTime())) {
+      return raw.includes('T') ? raw.split('T')[0] : raw;
+    }
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
   }
 
   get canAccessShipments(): boolean {
