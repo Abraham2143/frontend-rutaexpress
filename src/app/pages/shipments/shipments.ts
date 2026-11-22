@@ -574,6 +574,7 @@ export class Shipments implements OnInit {
      MODAL CANCELAR ENVÍO CON MOTIVO
   ===================================================== */
   openCancelModal(shipment: ShipmentResponse): void {
+    if (!this.canChangeStatus && !this.canCreateShipment) return;
     if (shipment.status === 'ENTREGADO' || shipment.status === 'CANCELADO') return;
     this.selectedShipmentForCancel = shipment;
     this.cancelReason = '';
@@ -639,6 +640,8 @@ export class Shipments implements OnInit {
      ELIMINAR DE LA VISTA (PEDIDOS YA FINALIZADOS)
   ===================================================== */
   deleteShipment(shipment: ShipmentResponse): void {
+    if (!this.canChangeStatus && !this.canCreateShipment) return;
+
     const confirmed = window.confirm(
       `¿Ocultar de la lista el pedido "${shipment.clienteId}" (#${shipment.trackingNumber})?`
     );

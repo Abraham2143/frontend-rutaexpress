@@ -41,7 +41,6 @@ export class Dashboard implements OnInit {
 
   showHelpModal = false;
   copiedAdminEmail = false;
-  supportReplyEmail = '';
   supportSubject = 'Consulta de soporte - RutaExpress';
   supportMessage = '';
   sendingSupport = false;
@@ -67,7 +66,6 @@ export class Dashboard implements OnInit {
       this.userName = account.name ?? 'Usuario';
       this.userEmail = account.username ?? '';
       this.userInitial = this.userName.charAt(0).toUpperCase();
-      this.supportReplyEmail = this.userEmail;
     }
 
     this.loadCatalogServices();
@@ -82,7 +80,6 @@ export class Dashboard implements OnInit {
     this.sendingSupport = false;
     this.supportSent = false;
     this.supportError = '';
-    this.supportReplyEmail = this.userEmail;
     this.supportSubject = 'Consulta de soporte - RutaExpress';
     this.supportMessage = '';
     this.showHelpModal = true;
@@ -107,9 +104,6 @@ export class Dashboard implements OnInit {
     this.supportError = '';
 
     const missingFields: string[] = [];
-    if (!this.supportReplyEmail.trim()) {
-      missingFields.push('Tu correo para respuesta');
-    }
     if (!this.supportSubject.trim()) {
       missingFields.push('Asunto');
     }
@@ -127,24 +121,16 @@ export class Dashboard implements OnInit {
       return;
     }
 
-    const cleanReplyEmail = this.supportReplyEmail.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(cleanReplyEmail)) {
-      this.supportError = 'Ingresa un formato de correo válido en el campo "Tu correo para respuesta".';
-      return;
-    }
-
     const cleanSubject = this.supportSubject.trim();
     const cleanMessage = this.supportMessage.trim();
+    const senderEmail = this.userEmail.trim();
 
     this.sendingSupport = true;
 
-    const payload = {
+    const payload: Record<string, string> = {
       Origen: 'Plataforma Web RutaExpress (Módulo de Ayuda y Soporte)',
       Motivo: 'Solicitud de contacto o asistencia enviada desde el Dashboard de RutaExpress.',
       Remitente: this.userName,
-      email: cleanReplyEmail,
-      _replyto: cleanReplyEmail,
       Rol_Activo: this.roleName,
       Asunto: cleanSubject,
       Mensaje: cleanMessage,
@@ -152,6 +138,12 @@ export class Dashboard implements OnInit {
       _template: 'table',
       _captcha: 'false'
     };
+
+    if (senderEmail) {
+      payload['Correo_Remitente'] = senderEmail;
+      payload['email'] = senderEmail;
+      payload['_replyto'] = senderEmail;
+    }
 
     this.http.post('https://formsubmit.co/ajax/ab.neira@duocuc.cl', payload, {
       headers: {

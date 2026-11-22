@@ -215,7 +215,7 @@ export class RoleService {
 
     const role = this.getRole();
 
-    return role === 'CLIENT' || role === 'DISPATCHER' || role === 'ADMIN';
+    return role === 'CLIENT' || role === 'DISPATCHER';
 
   }
 
@@ -224,7 +224,7 @@ export class RoleService {
 
     const role = this.getRole();
 
-    return role === 'ADMIN' || role === 'DISPATCHER';
+    return role === 'DISPATCHER';
 
   }
 
