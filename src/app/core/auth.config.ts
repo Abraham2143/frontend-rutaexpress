@@ -41,6 +41,10 @@ export const msalInterceptorConfig: MsalInterceptorConfiguration = {
     [`${API_GATEWAY_URL}/api/catalog/services`, [API_SCOPE]],
     [`${API_GATEWAY_URL}/api/catalog/services/*`, [API_SCOPE]],
     [`${API_GATEWAY_URL}/api/shipments`, [API_SCOPE]],
-    [`${API_GATEWAY_URL}/api/shipments/*`, [API_SCOPE]]
+    [`${API_GATEWAY_URL}/api/shipments/*`, [API_SCOPE]],
+    [`${API_GATEWAY_URL}/api/analytics`, [API_SCOPE]],
+    [`${API_GATEWAY_URL}/api/analytics/*`, [API_SCOPE]],
+    [`${API_GATEWAY_URL}/api/kafka`, [API_SCOPE]],
+    [`${API_GATEWAY_URL}/api/kafka/*`, [API_SCOPE]]
   ])
 };
