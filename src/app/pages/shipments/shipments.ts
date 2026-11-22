@@ -178,6 +178,15 @@ export class Shipments implements OnInit {
   }
 
   /* =====================================================
+     SERVICIOS ACTIVOS DEL CATÁLOGO
+  ===================================================== */
+  get activeCatalogServices(): any[] {
+    return this.catalogServices.filter(
+      service => service.status !== 'Inactivo' && service.activo !== false
+    );
+  }
+
+  /* =====================================================
      VALIDACIÓN DE ID DUPLICADO
   ===================================================== */
   get isDuplicateId(): boolean {
@@ -196,9 +205,9 @@ export class Shipments implements OnInit {
   ===================================================== */
   loadCatalogServices(): void {
     const fallbackServices = [
-      { id: 1, nombre: 'Estándar', name: 'Estándar', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 4990, fare: 4990, price: 4990 },
-      { id: 2, nombre: 'Express', name: 'Express', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 7990, fare: 7990, price: 7990 },
-      { id: 3, nombre: 'Same Day', name: 'Same Day', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 11990, fare: 11990, price: 11990 }
+      { id: 1, nombre: 'Estándar', name: 'Estándar', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 4990, fare: 4990, price: 4990, status: 'Activo', activo: true },
+      { id: 2, nombre: 'Express', name: 'Express', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 7990, fare: 7990, price: 7990, status: 'Activo', activo: true },
+      { id: 3, nombre: 'Same Day', name: 'Same Day', tiempoEntrega: '3 a 5 días', deliveryTime: '3 a 5 días', tarifa: 11990, fare: 11990, price: 11990, status: 'Activo', activo: true }
     ];
 
     this.catalogService.getServices().subscribe({
@@ -206,15 +215,19 @@ export class Shipments implements OnInit {
         const base = services && services.length > 0 ? services : fallbackServices;
         this.catalogServices = this.applyCatalogOverrides(base);
 
-        if (this.catalogServices.length > 0 && this.catalogServices[0].id) {
-          this.newShipment.servicioId = this.catalogServices[0].id;
+        const active = this.activeCatalogServices;
+        if (active.length > 0 && active[0].id) {
+          this.newShipment.servicioId = active[0].id;
         }
         this.changeDetector.detectChanges();
       },
       error: (error) => {
         console.error('Error cargando servicios del catálogo, usando fallback:', error);
         this.catalogServices = this.applyCatalogOverrides(fallbackServices);
-        this.newShipment.servicioId = this.catalogServices[0].id;
+        const active = this.activeCatalogServices;
+        if (active.length > 0 && active[0].id) {
+          this.newShipment.servicioId = active[0].id;
+        }
         this.changeDetector.detectChanges();
       }
     });
@@ -318,6 +331,13 @@ export class Shipments implements OnInit {
   openModal(): void {
     if (!this.canCreateShipment) return;
     this.catalogServices = this.applyCatalogOverrides(this.catalogServices);
+
+    const active = this.activeCatalogServices;
+    const isCurrentActive = active.some(s => s.id === Number(this.newShipment.servicioId));
+    if (!isCurrentActive) {
+      this.newShipment.servicioId = active.length > 0 ? active[0].id : 0;
+    }
+
     this.errorMessage = '';
     this.showModal = true;
   }
@@ -330,13 +350,26 @@ export class Shipments implements OnInit {
   createShipment(): void {
     if (!this.canCreateShipment) return;
 
+    const active = this.activeCatalogServices;
+    if (active.length === 0) {
+      this.errorMessage = 'No hay tipos de envío activos disponibles en el catálogo.';
+      return;
+    }
+
+    const selectedServiceId = Number(this.newShipment.servicioId);
+    const isServiceActive = active.some(s => s.id === selectedServiceId);
+    if (!isServiceActive) {
+      this.errorMessage = 'El tipo de servicio seleccionado está inactivo. Elige un servicio activo.';
+      return;
+    }
+
     if (
       !this.newShipment.clienteId.trim() ||
       !this.newShipment.destinatarioNombre.trim() ||
       !this.newShipment.destinatarioEmail.trim() ||
       !this.newShipment.direccionOrigen.trim() ||
       !this.newShipment.direccionDestino.trim() ||
-      !this.newShipment.servicioId
+      !selectedServiceId
     ) {
       this.errorMessage = 'Debes completar todos los campos.';
       return;
@@ -350,7 +383,7 @@ export class Shipments implements OnInit {
     const payload: CreateShipmentRequest = {
       ...this.newShipment,
       clienteId: this.newShipment.clienteId.trim(),
-      servicioId: Number(this.newShipment.servicioId)
+      servicioId: selectedServiceId
     };
 
     this.saving = true;
@@ -377,10 +410,11 @@ export class Shipments implements OnInit {
   }
 
   private resetForm(): void {
+    const active = this.activeCatalogServices;
     const defaultServicioId =
-      this.catalogServices.length > 0 && this.catalogServices[0].id
-        ? this.catalogServices[0].id
-        : 1;
+      active.length > 0 && active[0].id
+        ? active[0].id
+        : 0;
 
     this.newShipment = {
       clienteId: '',

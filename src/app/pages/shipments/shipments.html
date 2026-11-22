@@ -1,47 +1,45 @@
 <div class="page">
   <!-- SIDEBAR -->
-  <aside class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between;">
-    <div>
-      <div class="brand">
-        <div class="brand-icon">R</div>
-        <span>RutaExpress</span>
-      </div>
-
-      <nav class="menu">
-        <p class="menu-title">MENÚ</p>
-        <a class="menu-item" routerLink="/dashboard">
-          <span class="menu-icon">⌂</span>
-          <span>Inicio</span>
-        </a>
-        <a *ngIf="canAccessShipments" class="menu-item active" routerLink="/shipments">
-          <span class="menu-icon">▣</span>
-          <span>Envíos</span>
-        </a>
-        <a *ngIf="canAccessCatalog" class="menu-item" routerLink="/catalog">
-          <span class="menu-icon">◇</span>
-          <span>Catálogo</span>
-        </a>
-        <a *ngIf="canAccessReports" class="menu-item" routerLink="/reportes">
-          <span class="menu-icon">▤</span>
-          <span>Reportes</span>
-        </a>
-        <a *ngIf="canAccessAudit" class="menu-item" routerLink="/auditoria">
-          <span class="menu-icon">◈</span>
-          <span>Auditoría</span>
-        </a>
-      </nav>
+  <aside class="sidebar" style="display: flex; flex-direction: column;">
+    <div class="brand">
+      <div class="brand-icon">R</div>
+      <span>RutaExpress</span>
     </div>
 
-    <div style="padding-top: 20px;">
-      <div style="background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; gap: 12px; align-items: flex-start;">
-        <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;">
+    <nav class="menu">
+      <p class="menu-title">MENÚ</p>
+      <a class="menu-item" routerLink="/dashboard">
+        <span class="menu-icon">⌂</span>
+        <span>Inicio</span>
+      </a>
+      <a *ngIf="canAccessShipments" class="menu-item active" routerLink="/shipments">
+        <span class="menu-icon">▣</span>
+        <span>Envíos</span>
+      </a>
+      <a *ngIf="canAccessCatalog" class="menu-item" routerLink="/catalog">
+        <span class="menu-icon">◇</span>
+        <span>Catálogo</span>
+      </a>
+      <a *ngIf="canAccessReports" class="menu-item" routerLink="/reportes">
+        <span class="menu-icon">▤</span>
+        <span>Reportes</span>
+      </a>
+      <a *ngIf="canAccessAudit" class="menu-item" routerLink="/auditoria">
+        <span class="menu-icon">◈</span>
+        <span>Auditoría</span>
+      </a>
+    </nav>
+
+    <div style="margin-top: auto; padding-top: 20px;">
+      <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 14px; display: flex; align-items: center; gap: 12px;">
+        <div style="width: 34px; height: 34px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); color: #ffffff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0;">
           ▣
         </div>
         <div>
-          <strong style="display: block; color: #ffffff; font-size: 13px; margin-bottom: 4px;">
+          <strong style="display: block; color: #ffffff; font-size: 13px; margin-bottom: 3px;">
             Gestión de envíos
           </strong>
-          <p style="margin: 0; color: #94a3b8; font-size: 12px; line-height: 1.4;">
+          <p style="margin: 0; color: #94a3b8; font-size: 11.5px; line-height: 1.35;">
             Registra pedidos, revisa trazabilidad y actualiza estados operativos.
           </p>
         </div>
@@ -84,8 +82,8 @@
           <strong>{{ pendingCount }}</strong>
         </div>
         <div class="summary-card">
-          <span>Servicios catálogo</span>
-          <strong>{{ catalogServices.length }}</strong>
+          <span>Servicios activos</span>
+          <strong>{{ activeCatalogServices.length }}</strong>
         </div>
       </div>
 
@@ -338,18 +336,25 @@
             id="servicioId"
             name="servicioId"
             [(ngModel)]="newShipment.servicioId"
+            [disabled]="activeCatalogServices.length === 0"
             required
           >
             <option
-              *ngFor="let service of catalogServices"
+              *ngFor="let service of activeCatalogServices"
               [ngValue]="service.id"
             >
               {{ service.nombre || service.name }} - {{ service.tiempoEntrega || service.deliveryTime || 'Estándar' }} (Tarifa: ${{ service.tarifa ?? service.price ?? service.fare ?? 0 }})
             </option>
-            <option *ngIf="catalogServices.length === 0" [ngValue]="1">
-              Estándar - 3 a 5 días (Tarifa: $4990)
+            <option *ngIf="activeCatalogServices.length === 0" [ngValue]="0">
+              No hay servicios activos disponibles
             </option>
           </select>
+          <small
+            *ngIf="activeCatalogServices.length === 0"
+            style="display: block; margin-top: 4px; color: #dc2626; font-weight: 600;"
+          >
+            Todos los tipos de servicio están marcados como Inactivos en el Catálogo.
+          </small>
         </div>
 
         <div class="form-info" *ngIf="errorMessage">
@@ -370,7 +375,7 @@
           <button
             type="submit"
             class="save-button"
-            [disabled]="saving || isDuplicateId"
+            [disabled]="saving || isDuplicateId || activeCatalogServices.length === 0"
           >
             {{ saving ? 'Registrando...' : 'Registrar envío' }}
           </button>

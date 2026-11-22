@@ -98,7 +98,7 @@
         class="help-card"
         (click)="openHelpModal()"
         style="cursor: pointer;"
-        title="Haz clic para ver los datos de contacto del administrador"
+        title="Haz clic para contactar al administrador"
       >
         <div class="help-icon">
           ?
@@ -800,7 +800,7 @@
   >
     <div
       (click)="$event.stopPropagation()"
-      style="background: #ffffff; border-radius: 16px; max-width: 440px; width: 100%; padding: 24px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);"
+      style="background: #ffffff; border-radius: 16px; max-width: 460px; width: 100%; padding: 24px; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.2);"
     >
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
         <div>
@@ -809,6 +809,7 @@
         </div>
         <button
           type="button"
+          [disabled]="sendingSupport"
           (click)="closeHelpModal()"
           style="background: none; border: none; font-size: 22px; color: #64748b; cursor: pointer; line-height: 1;"
         >
@@ -816,7 +817,7 @@
         </button>
       </div>
 
-      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 16px;">
+      <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px; margin-bottom: 14px;">
         <p style="margin: 0 0 6px; font-size: 13px; color: #475569;">
           <strong>Administrador:</strong> Abraham Neira Ampuero
         </p>
@@ -825,22 +826,76 @@
         </p>
       </div>
 
-      <div style="display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;">
-        <button
-          type="button"
-          class="secondary-button"
-          (click)="copyAdminEmail()"
+      <form (ngSubmit)="sendSupportEmail()" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+            Asunto
+          </label>
+          <input
+            type="text"
+            name="supportSubject"
+            [(ngModel)]="supportSubject"
+            [disabled]="sendingSupport"
+            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 13px;"
+          />
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+            Mensaje para el administrador
+          </label>
+          <textarea
+            name="supportMessage"
+            [(ngModel)]="supportMessage"
+            [disabled]="sendingSupport"
+            rows="3"
+            placeholder="Describe tu solicitud o consulta..."
+            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 13px; resize: vertical;"
+          ></textarea>
+        </div>
+
+        <div
+          *ngIf="supportSent"
+          style="background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500;"
         >
-          {{ copiedAdminEmail ? '✓ Correo copiado' : 'Copiar correo' }}
-        </button>
-        <a
-          href="mailto:ab.neira@duocuc.cl?subject=Soporte%20RutaExpress"
-          class="primary-button"
-          style="text-decoration: none;"
+          ✓ Correo enviado correctamente a ab.neira@duocuc.cl.
+        </div>
+
+        <div
+          *ngIf="supportError"
+          style="background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500;"
         >
-          Enviar correo
-        </a>
-      </div>
+          {{ supportError }}
+        </div>
+
+        <div style="display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 4px;">
+          <button
+            type="button"
+            class="secondary-button"
+            (click)="copyAdminEmail()"
+          >
+            {{ copiedAdminEmail ? '✓ Correo copiado' : 'Copiar correo' }}
+          </button>
+
+          <a
+            [href]="outlookWebComposeUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="secondary-button"
+            style="text-decoration: none;"
+          >
+            Abrir Outlook Web
+          </a>
+
+          <button
+            type="submit"
+            class="primary-button"
+            [disabled]="!supportMessage.trim() || sendingSupport"
+          >
+            {{ sendingSupport ? 'Enviando...' : 'Enviar correo' }}
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
