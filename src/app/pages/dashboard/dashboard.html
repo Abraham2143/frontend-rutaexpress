@@ -32,8 +32,9 @@
         </span>
       </a>
 
-      <!-- ENVÍOS -->
+      <!-- ENVÍOS (ADMIN, DESPACHADOR, CLIENTE) -->
       <a
+        *ngIf="canAccessShipments"
         class="menu-item"
         routerLink="/shipments"
       >
@@ -45,7 +46,7 @@
         </span>
       </a>
 
-      <!-- CATÁLOGO SOLO ADMIN / DESPACHADOR -->
+      <!-- CATÁLOGO (ADMIN, DESPACHADOR) -->
       <a
         *ngIf="canAccessCatalog"
         class="menu-item"
@@ -59,8 +60,9 @@
         </span>
       </a>
 
-      <!-- REPORTES -->
+      <!-- REPORTES (SOLO ADMIN) -->
       <a
+        *ngIf="canAccessReports"
         class="menu-item"
         routerLink="/reportes"
       >
@@ -72,8 +74,9 @@
         </span>
       </a>
 
-      <!-- AUDITORÍA -->
+      <!-- AUDITORÍA (ADMIN, AUDITOR) -->
       <a
+        *ngIf="canAccessAudit"
         class="menu-item"
         routerLink="/auditoria"
       >
@@ -260,6 +263,10 @@
             Revisa tus últimos envíos y su estado actual.
           </p>
 
+          <p *ngIf="isAuditor">
+            Fiscaliza la bitácora de eventos y trazabilidad de envíos en modo solo lectura.
+          </p>
+
           <p *ngIf="!currentRole">
             Tu usuario está autenticado, pero no posee
             permisos asignados para utilizar RutaExpress.
@@ -383,19 +390,19 @@
         <div class="bottom-grid">
           <section
             class="quick-card"
-            routerLink="/shipments"
+            routerLink="/reportes"
           >
             <div class="quick-icon">
-              ▣
+              ▤
             </div>
 
             <div>
               <h3>
-                Gestionar envíos
+                Ver reportes y KPIs
               </h3>
               <p>
-                Consulta envíos y actualiza
-                su estado operacional.
+                Analítica de eventos en tiempo real
+                desde Apache Kafka.
               </p>
             </div>
 
@@ -406,19 +413,19 @@
 
           <section
             class="quick-card"
-            routerLink="/catalog"
+            routerLink="/auditoria"
           >
             <div class="quick-icon catalog">
-              ◇
+              ◈
             </div>
 
             <div>
               <h3>
-                Consultar catálogo
+                Auditoría y tópicos Kafka
               </h3>
               <p>
-                Revisa servicios, tarifas
-                y capacidad disponible.
+                Administra tópicos y consulta
+                la bitácora de eventos.
               </p>
             </div>
 
@@ -724,6 +731,47 @@
               <p>
                 Registra un nuevo envío y consulta
                 posteriormente su estado.
+              </p>
+            </div>
+
+            <span class="arrow">
+              →
+            </span>
+          </section>
+        </div>
+
+      </ng-container>
+
+      <!-- =====================================================
+           AUDITOR (SOLO LECTURA)
+      ====================================================== -->
+      <ng-container *ngIf="isAuditor">
+
+        <div class="section-role-title">
+          <span class="role-badge admin">
+            AUDITOR · SOLO LECTURA
+          </span>
+          <h3>
+            Control y trazabilidad
+          </h3>
+        </div>
+
+        <div class="bottom-grid single-action">
+          <section
+            class="quick-card"
+            routerLink="/auditoria"
+          >
+            <div class="quick-icon">
+              ◈
+            </div>
+
+            <div>
+              <h3>
+                Ir a bitácora de auditoría
+              </h3>
+              <p>
+                Consulta el historial completo de eventos
+                registrados desde Apache Kafka.
               </p>
             </div>
 

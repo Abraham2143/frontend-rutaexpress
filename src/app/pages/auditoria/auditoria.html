@@ -15,7 +15,7 @@
         <span>Inicio</span>
       </a>
 
-      <a class="menu-item" routerLink="/shipments">
+      <a *ngIf="canAccessShipments" class="menu-item" routerLink="/shipments">
         <span class="menu-icon">▣</span>
         <span>Envíos</span>
       </a>
@@ -25,12 +25,12 @@
         <span>Catálogo</span>
       </a>
 
-      <a class="menu-item" routerLink="/reportes">
+      <a *ngIf="canAccessReports" class="menu-item" routerLink="/reportes">
         <span class="menu-icon">▤</span>
         <span>Reportes</span>
       </a>
 
-      <a class="menu-item active" routerLink="/auditoria">
+      <a *ngIf="canAccessAudit" class="menu-item active" routerLink="/auditoria">
         <span class="menu-icon">◈</span>
         <span>Auditoría</span>
       </a>
@@ -75,12 +75,18 @@
       <section class="shipments-card" style="margin-bottom: 24px;">
         <div class="card-header">
           <div>
-            <h3>Administración de tópicos Kafka</h3>
-            <p>Crea, lista y elimina tópicos en el clúster <strong>rutaexpress-kafka</strong>.</p>
+            <h3>Tópicos del clúster Kafka</h3>
+            <p *ngIf="canManageTopics">
+              Crea, lista y elimina tópicos en el clúster <strong>rutaexpress-kafka</strong>.
+            </p>
+            <p *ngIf="!canManageTopics">
+              Vista en <strong>modo solo lectura (Rol Auditor)</strong>. Solo el Administrador puede crear o eliminar tópicos.
+            </p>
           </div>
         </div>
 
-        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px;">
+        <!-- FORMULARIO SOLO PARA ADMINISTRADOR -->
+        <div *ngIf="canManageTopics" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px;">
           <input
             type="text"
             [(ngModel)]="nuevoTopico.nombre"
@@ -111,7 +117,7 @@
                 <th>TÓPICO</th>
                 <th>PARTICIONES</th>
                 <th>REPLICACIÓN</th>
-                <th>ACCIÓN</th>
+                <th *ngIf="canManageTopics">ACCIÓN</th>
               </tr>
             </thead>
             <tbody>
@@ -119,7 +125,7 @@
                 <td class="shipment-id">{{ t.nombre }}</td>
                 <td>{{ t.particiones }}</td>
                 <td>{{ t.replicacion }}</td>
-                <td>
+                <td *ngIf="canManageTopics">
                   <button
                     class="secondary-button"
                     type="button"

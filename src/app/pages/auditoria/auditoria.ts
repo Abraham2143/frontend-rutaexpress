@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
+import { RoleService } from '../../core/role';
 
 @Component({
   selector: 'app-auditoria',
@@ -15,7 +16,6 @@ export class Auditoria implements OnInit {
   userName = 'Usuario';
   userEmail = '';
   userInitial = 'U';
-  canAccessCatalog = true;
 
   nuevoTopico = {
     nombre: '',
@@ -28,7 +28,10 @@ export class Auditoria implements OnInit {
 
   eventos: Array<{ eventId: string; shipmentId: string; estado: string; fecha: string }> = [];
 
-  constructor(private authService: MsalService) {}
+  constructor(
+    private authService: MsalService,
+    public roleService: RoleService
+  ) {}
 
   ngOnInit(): void {
     const account =
@@ -42,8 +45,28 @@ export class Auditoria implements OnInit {
     }
   }
 
+  get canAccessShipments(): boolean {
+    return this.roleService.canAccessShipments();
+  }
+
+  get canAccessCatalog(): boolean {
+    return this.roleService.canAccessCatalog();
+  }
+
+  get canAccessReports(): boolean {
+    return this.roleService.canAccessReports();
+  }
+
+  get canAccessAudit(): boolean {
+    return this.roleService.canAccessAudit();
+  }
+
+  get canManageTopics(): boolean {
+    return this.roleService.canManageTopics();
+  }
+
   crearTopico(): void {
-    if (!this.nuevoTopico.nombre.trim()) return;
+    if (!this.canManageTopics || !this.nuevoTopico.nombre.trim()) return;
     this.topicos.push({
       nombre: this.nuevoTopico.nombre.trim(),
       particiones: this.nuevoTopico.particiones,
@@ -53,6 +76,7 @@ export class Auditoria implements OnInit {
   }
 
   eliminarTopico(nombre: string): void {
+    if (!this.canManageTopics) return;
     this.topicos = this.topicos.filter(t => t.nombre !== nombre);
   }
 

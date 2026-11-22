@@ -48,7 +48,8 @@ export class Dashboard implements OnInit {
   ngOnInit(): void {
     const account =
       this.authService.instance.getActiveAccount()
-      ?? this.authService.instance.getAllAccounts()[0];
+      ??
+      this.authService.instance.getAllAccounts()[0];
 
     if (account) {
       this.userName = account.name ?? 'Usuario';
@@ -204,7 +205,8 @@ export class Dashboard implements OnInit {
     const names: Record<UserRole, string> = {
       ADMIN: 'Administrador',
       DISPATCHER: 'Despachador',
-      CLIENT: 'Cliente'
+      CLIENT: 'Cliente',
+      AUDITOR: 'Auditor'
     };
 
     return names[role];
@@ -232,8 +234,24 @@ export class Dashboard implements OnInit {
     return this.roleService.isClient();
   }
 
+  get isAuditor(): boolean {
+    return this.roleService.isAuditor();
+  }
+
+  get canAccessShipments(): boolean {
+    return this.roleService.canAccessShipments();
+  }
+
   get canAccessCatalog(): boolean {
     return this.roleService.canAccessCatalog();
+  }
+
+  get canAccessReports(): boolean {
+    return this.roleService.canAccessReports();
+  }
+
+  get canAccessAudit(): boolean {
+    return this.roleService.canAccessAudit();
   }
 
   /* =========================

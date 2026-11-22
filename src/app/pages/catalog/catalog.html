@@ -49,6 +49,7 @@
       <!-- ENVÍOS -->
 
       <a
+        *ngIf="canAccessShipments"
         class="menu-item"
         routerLink="/shipments"
       >
@@ -67,6 +68,7 @@
       <!-- CATÁLOGO -->
 
       <a
+        *ngIf="canAccessCatalog"
         class="menu-item active"
         routerLink="/catalog"
       >
@@ -85,6 +87,7 @@
       <!-- REPORTES -->
 
       <a
+        *ngIf="canAccessReports"
         class="menu-item"
         routerLink="/reportes"
       >
@@ -103,6 +106,7 @@
       <!-- AUDITORÍA -->
 
       <a
+        *ngIf="canAccessAudit"
         class="menu-item"
         routerLink="/auditoria"
       >

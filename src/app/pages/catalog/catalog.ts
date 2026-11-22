@@ -111,7 +111,7 @@ export class Catalog implements OnInit {
 
 
   /* =====================================================
-     ROLES
+     ROLES Y PERMISOS
   ===================================================== */
 
   get currentRole(): UserRole | null {
@@ -149,7 +149,41 @@ export class Catalog implements OnInit {
 
     }
 
+    if (this.currentRole === 'AUDITOR') {
+
+      return 'Auditor';
+
+    }
+
     return 'Cliente';
+
+  }
+
+
+  get canAccessShipments(): boolean {
+
+    return this.roleService.canAccessShipments();
+
+  }
+
+
+  get canAccessCatalog(): boolean {
+
+    return this.roleService.canAccessCatalog();
+
+  }
+
+
+  get canAccessReports(): boolean {
+
+    return this.roleService.canAccessReports();
+
+  }
+
+
+  get canAccessAudit(): boolean {
+
+    return this.roleService.canAccessAudit();
 
   }
 
