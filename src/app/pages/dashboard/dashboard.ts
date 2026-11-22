@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MsalService } from '@azure/msal-angular';
@@ -40,9 +41,15 @@ export class Dashboard implements OnInit {
 
   showHelpModal = false;
   copiedAdminEmail = false;
+  supportSubject = 'Consulta de soporte - RutaExpress';
+  supportMessage = '';
+  sendingSupport = false;
+  supportSent = false;
+  supportError = '';
 
   constructor(
     private authService: MsalService,
+    private http: HttpClient,
     public roleService: RoleService,
     private shipmentsService: ShipmentsService,
     private catalogService: CatalogService,
@@ -70,10 +77,16 @@ export class Dashboard implements OnInit {
   ========================== */
   openHelpModal(): void {
     this.copiedAdminEmail = false;
+    this.sendingSupport = false;
+    this.supportSent = false;
+    this.supportError = '';
+    this.supportSubject = 'Consulta de soporte - RutaExpress';
+    this.supportMessage = '';
     this.showHelpModal = true;
   }
 
   closeHelpModal(): void {
+    if (this.sendingSupport) return;
     this.showHelpModal = false;
   }
 
@@ -82,6 +95,54 @@ export class Dashboard implements OnInit {
       navigator.clipboard.writeText('ab.neira@duocuc.cl');
       this.copiedAdminEmail = true;
     }
+  }
+
+  sendSupportEmail(): void {
+    if (!this.supportMessage.trim() || this.sendingSupport) return;
+
+    this.sendingSupport = true;
+    this.supportSent = false;
+    this.supportError = '';
+
+    const payload = {
+      Nombre: this.userName,
+      Correo_Remitente: this.userEmail || 'No especificado',
+      Rol_Activo: this.roleName,
+      Mensaje: this.supportMessage.trim(),
+      _subject: this.supportSubject.trim() || 'Consulta de soporte - RutaExpress',
+      _replyto: this.userEmail || undefined,
+      _template: 'table'
+    };
+
+    this.http.post('https://formsubmit.co/ajax/ab.neira@duocuc.cl', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    }).subscribe({
+      next: () => {
+        this.sendingSupport = false;
+        this.supportSent = true;
+        this.supportMessage = '';
+        this.changeDetector.detectChanges();
+      },
+      error: (error) => {
+        console.error('Error enviando correo al administrador:', error);
+        this.sendingSupport = false;
+        this.supportError = 'No se pudo enviar el correo en este momento. Intenta nuevamente o usa Outlook Web.';
+        this.changeDetector.detectChanges();
+      }
+    });
+  }
+
+  get outlookWebComposeUrl(): string {
+    const subject = encodeURIComponent(this.supportSubject || 'Soporte RutaExpress');
+    const body = encodeURIComponent(
+      this.supportMessage.trim()
+        ? `${this.supportMessage.trim()}\n\nEnviado por: ${this.userName} (${this.userEmail})`
+        : `Hola Abraham,\n\nNecesito ayuda con la plataforma RutaExpress.\n\nEnviado por: ${this.userName} (${this.userEmail})`
+    );
+    return `https://outlook.office.com/mail/deeplink/compose?to=ab.neira@duocuc.cl&subject=${subject}&body=${body}`;
   }
 
   /* =========================
