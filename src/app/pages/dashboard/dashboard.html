@@ -805,7 +805,7 @@
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
         <div>
           <h3 style="margin: 0 0 4px; font-size: 18px; color: #0f172a;">Soporte y Administración</h3>
-          <p style="margin: 0; font-size: 13px; color: #64748b;">Contacto directo del administrador de RutaExpress.</p>
+          <p style="margin: 0; font-size: 13px; color: #64748b;">Envía tu consulta directa al administrador de RutaExpress.</p>
         </div>
         <button
           type="button"
@@ -826,7 +826,21 @@
         </p>
       </div>
 
-      <form (ngSubmit)="sendSupportEmail()" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px;">
+      <form (ngSubmit)="sendSupportEmail()" novalidate style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 4px;">
+        <div>
+          <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
+            Tu correo para respuesta
+          </label>
+          <input
+            type="email"
+            name="supportReplyEmail"
+            [(ngModel)]="supportReplyEmail"
+            [disabled]="sendingSupport"
+            placeholder="ejemplo@correo.cl"
+            style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 13px;"
+          />
+        </div>
+
         <div>
           <label style="display: block; font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 4px;">
             Asunto
@@ -836,6 +850,7 @@
             name="supportSubject"
             [(ngModel)]="supportSubject"
             [disabled]="sendingSupport"
+            placeholder="Ej: Solicitud de permisos o ayuda con envío"
             style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 10px; box-sizing: border-box; font-size: 13px;"
           />
         </div>
@@ -858,7 +873,7 @@
           *ngIf="supportSent"
           style="background: #f0fdf4; border: 1px solid #86efac; color: #166534; padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 500;"
         >
-          ✓ Correo enviado correctamente a ab.neira@duocuc.cl.
+          ✓ Correo enviado correctamente. El administrador podrá responder directo a tu correo.
         </div>
 
         <div
@@ -877,20 +892,10 @@
             {{ copiedAdminEmail ? '✓ Correo copiado' : 'Copiar correo' }}
           </button>
 
-          <a
-            [href]="outlookWebComposeUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="secondary-button"
-            style="text-decoration: none;"
-          >
-            Abrir Outlook Web
-          </a>
-
           <button
             type="submit"
             class="primary-button"
-            [disabled]="!supportMessage.trim() || sendingSupport"
+            [disabled]="sendingSupport"
           >
             {{ sendingSupport ? 'Enviando...' : 'Enviar correo' }}
           </button>

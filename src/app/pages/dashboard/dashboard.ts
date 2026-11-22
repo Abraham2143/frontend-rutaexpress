@@ -41,6 +41,7 @@ export class Dashboard implements OnInit {
 
   showHelpModal = false;
   copiedAdminEmail = false;
+  supportReplyEmail = '';
   supportSubject = 'Consulta de soporte - RutaExpress';
   supportMessage = '';
   sendingSupport = false;
@@ -66,6 +67,7 @@ export class Dashboard implements OnInit {
       this.userName = account.name ?? 'Usuario';
       this.userEmail = account.username ?? '';
       this.userInitial = this.userName.charAt(0).toUpperCase();
+      this.supportReplyEmail = this.userEmail;
     }
 
     this.loadCatalogServices();
@@ -80,6 +82,7 @@ export class Dashboard implements OnInit {
     this.sendingSupport = false;
     this.supportSent = false;
     this.supportError = '';
+    this.supportReplyEmail = this.userEmail;
     this.supportSubject = 'Consulta de soporte - RutaExpress';
     this.supportMessage = '';
     this.showHelpModal = true;
@@ -98,20 +101,56 @@ export class Dashboard implements OnInit {
   }
 
   sendSupportEmail(): void {
-    if (!this.supportMessage.trim() || this.sendingSupport) return;
+    if (this.sendingSupport) return;
 
-    this.sendingSupport = true;
     this.supportSent = false;
     this.supportError = '';
 
+    const missingFields: string[] = [];
+    if (!this.supportReplyEmail.trim()) {
+      missingFields.push('Tu correo para respuesta');
+    }
+    if (!this.supportSubject.trim()) {
+      missingFields.push('Asunto');
+    }
+    if (!this.supportMessage.trim()) {
+      missingFields.push('Mensaje para el administrador');
+    }
+
+    if (missingFields.length === 1) {
+      this.supportError = `Falta completar el campo: ${missingFields[0]}.`;
+      return;
+    }
+
+    if (missingFields.length > 1) {
+      this.supportError = `Faltan completar los siguientes campos: ${missingFields.join(', ')}.`;
+      return;
+    }
+
+    const cleanReplyEmail = this.supportReplyEmail.trim();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(cleanReplyEmail)) {
+      this.supportError = 'Ingresa un formato de correo válido en el campo "Tu correo para respuesta".';
+      return;
+    }
+
+    const cleanSubject = this.supportSubject.trim();
+    const cleanMessage = this.supportMessage.trim();
+
+    this.sendingSupport = true;
+
     const payload = {
-      Nombre: this.userName,
-      Correo_Remitente: this.userEmail || 'No especificado',
+      Origen: 'Plataforma Web RutaExpress (Módulo de Ayuda y Soporte)',
+      Motivo: 'Solicitud de contacto o asistencia enviada desde el Dashboard de RutaExpress.',
+      Remitente: this.userName,
+      email: cleanReplyEmail,
+      _replyto: cleanReplyEmail,
       Rol_Activo: this.roleName,
-      Mensaje: this.supportMessage.trim(),
-      _subject: this.supportSubject.trim() || 'Consulta de soporte - RutaExpress',
-      _replyto: this.userEmail || undefined,
-      _template: 'table'
+      Asunto: cleanSubject,
+      Mensaje: cleanMessage,
+      _subject: `[RutaExpress Soporte] ${cleanSubject} — de ${this.userName}`,
+      _template: 'table',
+      _captcha: 'false'
     };
 
     this.http.post('https://formsubmit.co/ajax/ab.neira@duocuc.cl', payload, {
@@ -129,20 +168,10 @@ export class Dashboard implements OnInit {
       error: (error) => {
         console.error('Error enviando correo al administrador:', error);
         this.sendingSupport = false;
-        this.supportError = 'No se pudo enviar el correo en este momento. Intenta nuevamente o usa Outlook Web.';
+        this.supportError = 'No se pudo enviar el correo en este momento. Intenta nuevamente en unos segundos.';
         this.changeDetector.detectChanges();
       }
     });
-  }
-
-  get outlookWebComposeUrl(): string {
-    const subject = encodeURIComponent(this.supportSubject || 'Soporte RutaExpress');
-    const body = encodeURIComponent(
-      this.supportMessage.trim()
-        ? `${this.supportMessage.trim()}\n\nEnviado por: ${this.userName} (${this.userEmail})`
-        : `Hola Abraham,\n\nNecesito ayuda con la plataforma RutaExpress.\n\nEnviado por: ${this.userName} (${this.userEmail})`
-    );
-    return `https://outlook.office.com/mail/deeplink/compose?to=ab.neira@duocuc.cl&subject=${subject}&body=${body}`;
   }
 
   /* =========================
