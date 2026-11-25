@@ -91,11 +91,11 @@ export class KafkaAnalyticsService {
               const replication = Number(detail['replicationFactor'] ?? 1);
               return {
                 nombre: name,
-                particiones: partitionCount || 1,
-                replicacion: replication || 1
+                particiones: partitionCount || 3,
+                replicacion: replication || 3
               };
             }),
-            catchError(() => of({ nombre: name, particiones: 1, replicacion: 1 }))
+            catchError(() => of({ nombre: name, particiones: 3, replicacion: 3 }))
           )
         );
         return forkJoin(detailRequests);
@@ -103,7 +103,7 @@ export class KafkaAnalyticsService {
     );
   }
 
-  createTopic(name: string, partitions = 1, replicationFactor = 1): Observable<unknown> {
+  createTopic(name: string, partitions = 3, replicationFactor = 3): Observable<unknown> {
     const body: CreateTopicRequest = {
       name,
       partitions,
