@@ -87,8 +87,8 @@ export class KafkaAnalyticsService {
               const partitionsRaw = detail['partitions'];
               const partitionCount = Array.isArray(partitionsRaw)
                 ? partitionsRaw.length
-                : Number(partitionsRaw ?? detail['partitionCount'] ?? 1);
-              const replication = Number(detail['replicationFactor'] ?? 1);
+                : Number(partitionsRaw ?? detail['partitionCount'] ?? 3);
+              const replication = Number(detail['replicationFactor'] ?? 3);
               return {
                 nombre: name,
                 particiones: partitionCount || 3,
