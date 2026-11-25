@@ -27,8 +27,8 @@ export class Auditoria implements OnInit {
 
   nuevoTopico = {
     nombre: '',
-    particiones: 1,
-    replicacion: 1
+    particiones: 3,
+    replicacion: 3
   };
 
   topicos: KafkaTopicItem[] = [];
@@ -140,8 +140,8 @@ export class Auditoria implements OnInit {
     if (!this.canManageTopics) return;
     this.nuevoTopico = {
       nombre: '',
-      particiones: 1,
-      replicacion: 1
+      particiones: 3,
+      replicacion: 3
     };
     this.modalErrorMessage = '';
     this.mostrarModalCrear = true;
@@ -155,8 +155,8 @@ export class Auditoria implements OnInit {
 
   crearTopico(): void {
     const nombre = this.nuevoTopico.nombre.trim();
-    const particiones = Number(this.nuevoTopico.particiones) || 1;
-    const replicacion = Number(this.nuevoTopico.replicacion) || 1;
+    const particiones = Number(this.nuevoTopico.particiones) || 3;
+    const replicacion = Number(this.nuevoTopico.replicacion) || 3;
 
     if (!this.canManageTopics || this.savingTopic) return;
 
@@ -173,7 +173,7 @@ export class Auditoria implements OnInit {
       next: () => {
         this.savingTopic = false;
         this.mostrarModalCrear = false;
-        this.nuevoTopico = { nombre: '', particiones: 1, replicacion: 1 };
+        this.nuevoTopico = { nombre: '', particiones: 3, replicacion: 3 };
         this.cargarTopicos();
       },
       error: (err) => {
